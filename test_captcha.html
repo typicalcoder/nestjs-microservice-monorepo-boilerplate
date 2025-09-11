@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form>
+    <div id="captcha-container"></div>
+    <button id="smartcaptcha-demo-submit" disabled="1">Submit</button>
+    <input id="smartcaptcha-demo-submit-token" type="text" />
+</form>
+
+<script
+        src="https://smartcaptcha.yandexcloud.net/captcha.js?render=onload&onload=smartCaptchaInit"
+        defer
+></script>
+
+<script>
+    function callback(token) {
+        console.log(token);
+        if (token) {
+            document
+                .getElementById('smartcaptcha-demo-submit')
+                .removeAttribute('disabled');
+            document
+                .getElementById('smartcaptcha-demo-submit-token')
+                .value = token;
+        } else {
+            document
+                .getElementById('smartcaptcha-demo-submit')
+                .setAttribute('disabled', '1');
+        }
+    }
+
+    function smartCaptchaInit() {
+        if (!window.smartCaptcha) {
+            return;
+        }
+
+        window.smartCaptcha.render('captcha-container', {
+            sitekey: 'ysc1_AxREuIMOXSCJk6H5IkIInQQZkP6flEybmnscedwVd494d1fe',
+            callback: callback,
+        });
+    }
+
+    function smartCaptchaReset() {
+        if (!window.smartCaptcha) {
+            return;
+        }
+
+        window.smartCaptcha.reset();
+    }
+
+    function smartCaptchaGetResponse() {
+        if (!window.smartCaptcha) {
+            return;
+        }
+
+        var resp = window.smartCaptcha.getResponse();
+        console.log(resp);
+        alert(resp);
+    }
+</script>
+</body>
+</html>
