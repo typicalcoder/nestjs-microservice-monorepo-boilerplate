@@ -1,0 +1,77 @@
+name: 'Update Image'
+inputs:
+  repo:
+    required: true
+    type: string
+    description: 'URL of the repository containing the kubernetes manifests'
+  image:
+    required: true
+    type: string
+    description: 'Name of the image to be updated'
+  tag:
+    required: true
+    type: string
+    description: 'New tag assigned to the image'
+  service:
+    required: true
+    type: string
+    description: 'Service of the monorepo'
+  registry:
+    required: false
+    type: string
+    description: 'URL of the registry used to store the image'
+    default: 'ghcr.io'
+  token:
+    required: false
+    type: string
+    description: 'Personal access token (PAT) used to fetch the repository'
+  ssh-key:
+    required: false
+    type: string
+    description: 'SSH key used to fetch the repository'
+  kustomize-path:
+    required: false
+    type: string
+    description: 'Path to the folder where kustomization.yaml is stored'
+    default: 'manifests'
+runs:
+  using: "composite"
+  steps:
+
+    - name: Clone the repository to be updated (with ssh-key)
+      if: inputs.ssh-key != ''
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repo }}
+        ssh-key: ${{ inputs.ssh-key }}
+        path: ./tmp
+
+    - name: Clone the repository to be updated (with token)
+      if: inputs.token != ''
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repo }}
+        token: ${{ inputs.token }}
+        path: ./tmp
+
+    - name: Install Kustomize
+      run: |
+        cd tmp/${{ inputs.kustomize-path }}
+        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s 5.7.1
+      shell: bash
+
+    - name: Edit kustomization.yaml with new image tag
+      run: |
+        cd tmp/${{ inputs.kustomize-path }}
+        ./kustomize edit set image ${{ inputs.image }}=${{inputs.registry}}/${{ github.repository }}/${{ inputs.service }}:${{ inputs.tag }}
+        rm kustomize
+      shell: bash
+
+    - name: Push changes to repo
+      run: |
+        cd tmp/${{ inputs.kustomize-path }}
+        git config --global user.email ${{ github.actor }}
+        git config --global user.name ${{ github.actor }}
+        
+        git commit -a -m "Update ${{ inputs.image }} for ${{ inputs.kustomize-path }} with new tag ${{ inputs.tag }}" && git pull origin main --rebase && git push
+      shell: bash

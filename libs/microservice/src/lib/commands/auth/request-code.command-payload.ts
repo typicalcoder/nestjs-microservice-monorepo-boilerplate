@@ -17,7 +17,7 @@ export class RequestCodeCommandRequestPayload extends BasePayload {
     description: 'Номер телефона для авторизации',
   })
   @IsPhoneNumber('RU', { message: 'Номер телефона должен быть валидным' })
-  @Transform(({ value }) => value.replaceAll(/\D/g, ''))
+  @Transform(({ value }: { value: string }) => value.replaceAll(/\D/g, ''))
   @Expose()
   phone: string;
 

@@ -1,4 +1,4 @@
-import { MicroservicesEnum } from '@bootstrap';
+import { MicroservicesEnum } from '@microservice';
 import { firstValueFrom } from 'rxjs';
 import { LixRequest } from '@bootstrap/types';
 

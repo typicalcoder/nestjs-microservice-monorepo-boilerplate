@@ -1,4 +1,4 @@
-import { MicroservicesEnum } from '@bootstrap';
+import { MicroservicesEnum } from '@microservice';
 import { selectConfig } from 'nest-typed-config';
 import { BaseConfig, ConfigModuleFactory } from '@bootstrap/base-config';
 

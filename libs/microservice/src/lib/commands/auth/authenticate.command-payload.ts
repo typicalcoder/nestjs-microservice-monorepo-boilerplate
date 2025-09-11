@@ -16,7 +16,7 @@ export class AuthenticateCommandRequestPayload extends BasePayload {
     description: 'Номер телефона для авторизации',
   })
   @IsPhoneNumber('RU')
-  @Transform(({ value }) => value.replaceAll(/\D/g, ''))
+  @Transform(({ value }: { value: string }) => value.replaceAll(/\D/g, ''))
   @Expose()
   phone: string;
 

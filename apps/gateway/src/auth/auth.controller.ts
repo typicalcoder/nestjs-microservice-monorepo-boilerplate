@@ -55,8 +55,8 @@ export class AuthController {
   @Post('auth')
   auth(
     @Body() dto: AuthenticateCommandRequestPayload,
-    @Ip() ipDirect: string,
-    @Headers('CF-Connecting-IP') ipCf?: string,
+    //@Ip() ipDirect: string,
+    //@Headers('CF-Connecting-IP') ipCf?: string,
   ): Observable<AuthenticateCommandResponsePayload> {
     //dto.ip = ipCf ?? ipDirect;
     return this.authService.auth(dto);

@@ -1,6 +1,6 @@
-import { bootstrapService, MicroservicesEnum } from '@bootstrap';
+import { bootstrapService } from '@bootstrap';
 
 import { AppModule } from './app.module';
 import { Config } from './config';
 
-void bootstrapService<MicroservicesEnum.CORE, AppModule>(AppModule, Config);
+void bootstrapService(AppModule, Config);

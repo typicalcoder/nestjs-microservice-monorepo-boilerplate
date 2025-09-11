@@ -46,7 +46,9 @@ export function OrGuard(guards: Type<CanActivate>[]): Type<CanActivate> {
       if (resolved) {
         return true;
       } else {
-        const errors = canActivateReturns.filter(x => x !== 0 && x !== 1);
+        const errors: LixException[] = canActivateReturns
+          .filter(x => x !== 0 && x !== 1)
+          .filter(x => x instanceof LixException);
         throw errors.length > 0
           ? errors[0]
           : new LixException(

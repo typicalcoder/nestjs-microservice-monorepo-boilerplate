@@ -21,21 +21,21 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @MessagePattern(AuthCommands.authenticate)
-  async auth(
+  auth(
     @Payload() data: AuthenticateCommandRequestPayload,
   ): Promise<AuthenticateCommandResponsePayload> {
     return this.appService.auth(data);
   }
 
   @MessagePattern(AuthCommands.refreshToken)
-  async refresh(
+  refresh(
     @Payload() data: RefreshTokenCommandRequestPayload,
   ): Promise<RefreshTokenCommandResponsePayload> {
     return this.appService.refresh(data);
   }
 
   @MessagePattern(AuthCommands.requestCode)
-  async requestCode(
+  requestCode(
     @Payload() data: RequestCodeCommandRequestPayload,
   ): Promise<RequestCodeCommandResponsePayload> {
     return this.appService.requestCode(data);

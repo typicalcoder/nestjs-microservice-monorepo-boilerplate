@@ -31,8 +31,8 @@ export function setupSwagger(
 
   const document = SwaggerModule.createDocument(app, docConfig.build());
 
-  SwaggerModule.setup(`/doc`, app, document, {
+  SwaggerModule.setup('/doc', app, document, {
     customCss: swaggerCssStyles,
   });
-  getLogger().info(`Swagger initialized on path: '/doc'`);
+  getLogger().info("Swagger initialized on path: '/doc'");
 }

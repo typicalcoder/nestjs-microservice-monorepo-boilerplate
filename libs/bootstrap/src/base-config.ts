@@ -1,4 +1,5 @@
 import { join } from 'path';
+import { MicroservicesEnum } from '@microservice';
 import { ClassConstructor } from 'class-transformer';
 import { IsEnum, IsOptional, IsPort, IsString, IsUrl } from 'class-validator';
 import {
@@ -7,7 +8,6 @@ import {
   TypedConfigModule,
 } from 'nest-typed-config';
 import { LixException } from '@bootstrap/errors';
-import { MicroservicesEnum } from '@bootstrap/index';
 
 import { DynamicModule, Injectable } from '@nestjs/common';
 
@@ -27,11 +27,16 @@ export class BaseConfig {
   readonly MONGO?: string;
 
   @IsString()
-  protected readonly SERVICE_NAME!: MicroservicesEnum;
-
-  @IsString()
   @IsOptional()
   readonly POD_NAME?: string;
+
+  @IsUrl({ protocols: ['amqp'], require_tld: false })
+  readonly RABBIT_MQ!: string;
+
+  @IsPort() @IsOptional() readonly SERVICE_PORT: string = '3000';
+
+  @IsString()
+  protected readonly SERVICE_NAME!: MicroservicesEnum;
 
   get serviceName(): MicroservicesEnum {
     if (
@@ -43,18 +48,12 @@ export class BaseConfig {
     }
     return MicroservicesEnum[this.SERVICE_NAME];
   }
-
-  @IsUrl({ protocols: ['amqp'], require_tld: false })
-  readonly RABBIT_MQ!: string;
-
-  @IsPort() @IsOptional() readonly SERVICE_PORT: string = '3000';
-
-  getQueueName(name?: MicroservicesEnum) {
-    return `${this.NODE_ENV}-${name ?? this.serviceName}`.toLowerCase();
-  }
-
   static normalize(config: Record<string, unknown>): Record<string, unknown> {
     return config as unknown as Record<string, unknown>;
+  }
+
+  getQueueName(name?: MicroservicesEnum): string {
+    return `${this.NODE_ENV}-${name ?? this.serviceName}`.toLowerCase();
   }
 }
 
@@ -65,7 +64,8 @@ export function ConfigModuleFactory<T extends typeof BaseConfig>(
   return TypedConfigModule.forRoot({
     isGlobal: true,
     schema,
-    normalize: schema.normalize,
+    normalize: (config: Record<string, unknown>): Record<string, unknown> =>
+      schema.normalize(config),
     load: [
       dotenvLoader({
         envFilePath:

@@ -1,20 +1,8 @@
-import { MicroservicesEnum } from '@bootstrap';
+import { MicroservicesEnum } from '@microservice';
 
-import {
-  AuthCommandPayload,
-  AuthCommands,
-  AuthCommandTypeMap,
-} from '@microservice/lib/commands/auth';
-import {
-  SmsCommandPayload,
-  SmsCommands,
-  SmsCommandTypeMap,
-} from '@microservice/lib/commands/sms';
-import {
-  UsersCommandPayload,
-  UsersCommands,
-  UsersCommandTypeMap,
-} from '@microservice/lib/commands/users';
+import { AuthCommandPayload, AuthCommands, AuthCommandTypeMap, } from '@microservice/lib/commands/auth';
+import { SmsCommandPayload, SmsCommands, SmsCommandTypeMap, } from '@microservice/lib/commands/sms';
+import { UsersCommandPayload, UsersCommands, UsersCommandTypeMap, } from '@microservice/lib/commands/users';
 
 export type Commands = {
   [MicroservicesEnum.AUTH]: AuthCommands;

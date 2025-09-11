@@ -20,17 +20,21 @@ export class TransformResponseInterceptor<T>
       map(data => {
         if (isObject(data)) {
           return Object.fromEntries(
-            Object.entries(data).filter(([k, v]) => !k.startsWith('__')),
-          );
+            Object.entries(data).filter(([k]) => !k.startsWith('__')),
+          ) as Partial<T>;
         }
         if (isArray(data)) {
           return data.map(item =>
-            Object.fromEntries(
-              Object.entries(item).filter(([k, v]) => !k.startsWith('__')),
-            ),
-          );
+            isObject(item as unknown)
+              ? Object.fromEntries(
+                  Object.entries(item as object).filter(
+                    ([k]) => !k.startsWith('__'),
+                  ),
+                )
+              : (item as unknown),
+          ) as unknown as Partial<T>;
         }
-        return data;
+        return data as Partial<T>;
       }),
     );
   }

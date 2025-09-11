@@ -1,4 +1,4 @@
-import { MicroservicesEnum } from '@bootstrap';
+import { MicroservicesEnum } from '@microservice';
 
 import { buildClientProvider } from '@microservice/lib/build-client-provider';
 

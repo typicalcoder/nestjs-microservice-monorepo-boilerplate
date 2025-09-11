@@ -1,0 +1,129 @@
+name: CI/CD
+permissions:
+  contents: read
+  packages: write
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - gateway
+          - core
+          - auth
+          - users
+          - all
+
+      stage:
+        description: 'Stage'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - dev
+          - prod
+          - all
+
+env:
+  IMAGE_TAG: ${{ github.sha }}
+  DEPLOY_REPO: 'example/repo' # replace argocd repo
+  PROJECT: 'project' # replace project name
+  ALL_SERVICES: gateway,core,auth,users
+  ALL_STAGES: dev,prod
+
+jobs:
+  set-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      full-matrix: ${{ steps.set-matrix.outputs.full-matrix }}
+      services-matrix: ${{ steps.set-matrix.outputs.services-matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          # читаем env переменные
+          IFS=',' read -r -a SERVICES <<< "${ALL_SERVICES}"
+          IFS=',' read -r -a STAGES <<< "${ALL_STAGES}"
+
+          # фильтруем по входным параметрам workflow_dispatch
+          if [[ "${{ github.event.inputs.service }}" != "all" ]]; then
+            SERVICES=("${{ github.event.inputs.service }}")
+          fi
+          if [[ "${{ github.event.inputs.stage }}" != "all" ]]; then
+            STAGES=("${{ github.event.inputs.stage }}")
+          fi
+
+          # матрица service × stage (для деплоя)
+          FULL_MATRIX=$(jq -n \
+            --argjson services "$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -s .)" \
+            --argjson stages "$(printf '%s\n' "${STAGES[@]}" | jq -R . | jq -s .)" \
+            '{include: [$services[] as $s | $stages[] as $st | {service: $s, stage: $st}] }')
+
+          # матрица только по сервисам (для билда)
+          SERVICES_MATRIX=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -s '{service: .}')
+
+          echo "full-matrix<<EOF" >> $GITHUB_OUTPUT
+          echo "$FULL_MATRIX" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "services-matrix<<EOF" >> $GITHUB_OUTPUT
+          echo "$SERVICES_MATRIX" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "Generated full matrix:"
+          echo "$FULL_MATRIX"
+          echo "Generated services matrix:"
+          echo "$SERVICES_MATRIX"
+
+  build-and-push:
+    needs: set-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.set-matrix.outputs.services-matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          build-args: |
+            SERVICE=${{ matrix.service }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+
+  deploy-argo:
+    needs: [build-and-push, set-matrix]
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.set-matrix.outputs.full-matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/update-image
+        with:
+          registry: ghcr.io
+          repo: ${{ env.DEPLOY_REPO }}
+          service: ${{ matrix.service }}
+          tag: ${{ env.IMAGE_TAG }}
+          ssh-key: "${{ secrets.SSH_KEY }}"
+          kustomize-path: ${{ matrix.stage }}
+          image: ${{ env.PROJECT }}-${{ matrix.service }}-image

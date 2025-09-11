@@ -1,4 +1,4 @@
-import { MicroservicesEnum } from '@bootstrap';
+import { MicroservicesEnum } from '@microservice';
 
 import { buildClientProvider } from '@microservice/lib/build-client-provider';
 
@@ -36,19 +36,17 @@ import { RefreshService } from './refresh/refresh.service';
     CacheModule.registerAsync({
       inject: [Config],
       isGlobal: true,
-      useFactory: async (config: Config) => {
-        return {
-          stores: [
-            new KeyvRedis({
-              url: config.REDIS_URL,
-              socket: {
-                keepAlive: true,
-                connectTimeout: 5000,
-              },
-            } as RedisClientOptions),
-          ],
-        };
-      },
+      useFactory: (config: Config) => ({
+        stores: [
+          new KeyvRedis({
+            url: config.REDIS_URL,
+            socket: {
+              keepAlive: true,
+              connectTimeout: 5000,
+            },
+          } as RedisClientOptions),
+        ],
+      }),
     }),
   ],
   controllers: [AppController],

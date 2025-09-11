@@ -1,8 +1,8 @@
-import { MicroservicesEnum } from '@bootstrap';
 import {
   AuthCommands,
   AuthenticateCommandRequestPayload,
   AuthenticateCommandResponsePayload,
+  MicroservicesEnum,
   RefreshTokenCommandRequestPayload,
   RefreshTokenCommandResponsePayload,
 } from '@microservice';

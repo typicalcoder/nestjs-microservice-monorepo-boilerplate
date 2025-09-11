@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
-import { MicroservicesEnum } from '@bootstrap';
 import {
   AuthenticateCommandRequestPayload,
   AuthenticateCommandResponsePayload,
+  MicroservicesEnum,
   RefreshTokenCommandRequestPayload,
   RefreshTokenCommandResponsePayload,
 } from '@microservice';
@@ -105,7 +105,7 @@ export class AppService {
     let user: UserEntity;
     try {
       user = await this.getUser({ phone: data.phone });
-    } catch (e) {
+    } catch {
       user = await this.createUser(data.phone);
     }
 
@@ -190,10 +190,18 @@ export class AppService {
         }),
       );
 
-      if (resp?.data?.status === 'ok') {
+      if (
+        resp?.data &&
+        typeof resp.data === 'object' &&
+        resp.data !== null &&
+        'status' in resp.data &&
+        (resp.data as { status: unknown }).status === 'ok'
+      ) {
         return true;
       }
-    } catch (e) {}
+    } catch {
+      /* empty */
+    }
 
     return false;
   }

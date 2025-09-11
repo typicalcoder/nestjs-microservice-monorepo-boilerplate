@@ -1,8 +1,10 @@
 // @ts-check
-import eslint from '@eslint/js';
+import importPlugin from 'eslint-plugin-import';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+
+import eslint from '@eslint/js';
 
 export default tseslint.config(
   {
@@ -11,6 +13,23 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   eslintPluginPrettierRecommended,
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      importPlugin.flatConfigs.recommended,
+      importPlugin.flatConfigs.typescript,
+    ],
+    settings: {
+      'import/internal-regex': '^@(microservice|bootstrap)/',
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+      },
+    },
+    // other configs...
+  },
   {
     languageOptions: {
       globals: {
@@ -43,12 +62,6 @@ export default tseslint.config(
       'arrow-parens': ['error', 'as-needed'],
       'require-await': ['error'],
       '@typescript-eslint/explicit-function-return-type': ['error'],
-      'import/order': [
-        'error',
-        {
-          groups: ['builtin', 'external', 'internal', 'type'],
-        },
-      ],
       '@typescript-eslint/no-empty-interface': ['error'],
       '@typescript-eslint/await-thenable': ['error'],
       'no-console': ['error'],

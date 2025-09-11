@@ -1,5 +1,4 @@
 import { ObjectId } from 'bson';
-import { SourceCode } from 'eslint';
 import { LixRpcException } from '@bootstrap/errors';
 
 import { EntityRepository } from '@mikro-orm/mongodb';

@@ -1,5 +1,6 @@
 import process from 'process';
-import { HttpModuleGlobal, MicroservicesEnum } from '@bootstrap';
+import { HttpModuleGlobal } from '@bootstrap';
+import { MicroservicesEnum } from '@microservice';
 import { useContainer } from 'class-validator';
 import compression from 'compression';
 import { selectConfig } from 'nest-typed-config';
@@ -40,7 +41,7 @@ import { setupSwagger } from './common/swagger/setup-swagger';
 import { Config } from './config';
 import { GatewayModule } from './gateway.module';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   process.on('unhandledRejection', (reason: unknown) => {
     reason =
       reason instanceof Error
@@ -86,16 +87,16 @@ async function bootstrap() {
     ],
   })
   class BootstrapModule implements NestModule {
-    configure(consumer: MiddlewareConsumer): void {
-      consumer.apply(AsyncStorageMiddleware).forRoutes('{*path}');
-      consumer.apply(RequestLoggingMiddleware).forRoutes('{*path}');
-    }
-
     static registerAsync(): DynamicModule {
       return {
         module: BootstrapModule,
         imports: [GatewayModule, configModule],
       };
+    }
+
+    configure(consumer: MiddlewareConsumer): void {
+      consumer.apply(AsyncStorageMiddleware).forRoutes('{*path}');
+      consumer.apply(RequestLoggingMiddleware).forRoutes('{*path}');
     }
   }
 
@@ -126,7 +127,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      exceptionFactory: errors =>
+      exceptionFactory: (errors): LixException =>
         new LixException(
           'ValidationError',
           HttpStatus.NOT_ACCEPTABLE,

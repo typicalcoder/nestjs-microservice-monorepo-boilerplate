@@ -2,11 +2,7 @@ import { firstValueFrom } from 'rxjs';
 import { getLogger } from '@bootstrap/logger';
 
 import { HttpService } from '@nestjs/axios';
-import {
-  Injectable,
-  InternalServerErrorException,
-  OnApplicationBootstrap,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException, OnApplicationBootstrap, } from '@nestjs/common';
 
 import { Config } from './config';
 
@@ -24,7 +20,7 @@ export class SmsService implements OnApplicationBootstrap {
     }
   }
 
-  async testKey() {
+  async testKey(): Promise<boolean> {
     try {
       const resp = await firstValueFrom(
         this.httpService.get(
@@ -32,8 +28,20 @@ export class SmsService implements OnApplicationBootstrap {
         ),
       );
 
-      return resp?.data?.status === 'OK';
-    } catch (error) {}
+      return (
+        resp?.data &&
+        typeof resp.data === 'object' &&
+        true &&
+        'status' in resp.data &&
+        (
+          resp.data as {
+            status: unknown;
+          }
+        ).status === 'OK'
+      );
+    } catch {
+      /* empty */
+    }
     return false;
   }
 
@@ -44,10 +52,22 @@ export class SmsService implements OnApplicationBootstrap {
           `https://sms.ru/my/balance?api_id=${this.config.SMSRU_API_KEY}&json=1`,
         ),
       );
-      if (resp?.data?.status === 'OK') {
-        return resp.data?.balance;
+
+      if (
+        resp?.data &&
+        typeof resp.data === 'object' &&
+        'status' in resp.data &&
+        (resp.data as { status: unknown }).status === 'OK' &&
+        'balance' in resp.data
+      ) {
+        const balanceData = resp.data as { balance: unknown };
+        return typeof balanceData.balance === 'number'
+          ? balanceData.balance
+          : -1;
       }
-    } catch (error) {}
+    } catch {
+      /* empty */
+    }
     return -1;
   }
 
@@ -55,13 +75,21 @@ export class SmsService implements OnApplicationBootstrap {
     try {
       const resp = await firstValueFrom(
         this.httpService.get(
-          `https://sms.ru/sms/send?api_id=${this.config.SMSRU_API_KEY}&to=${phone}&msg=${encodeURIComponent(msg)}&json=1&from=BUDDJET${ip ? '&ip=' + ip : ''}`,
+          `https://sms.ru/sms/send?api_id=${this.config.SMSRU_API_KEY}&to=${phone}&msg=${encodeURIComponent(msg)}&json=1&from=BUDDJET${ip ? '&ip=' + ip : ''}&partner_id=191553`,
         ),
       );
-      if (resp?.data?.status === 'OK') {
-        return resp.data?.balance;
+
+      if (
+        resp?.data &&
+        typeof resp.data === 'object' &&
+        'status' in resp.data &&
+        (resp.data as { status: unknown }).status === 'OK'
+      ) {
+        return (resp.data as { balance: number }).balance ?? -1;
       }
-    } catch (error) {}
+    } catch {
+      /* empty */
+    }
     return -1;
   }
 }

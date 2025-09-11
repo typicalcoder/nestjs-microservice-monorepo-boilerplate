@@ -27,7 +27,7 @@ export const setupAsyncStorage = (
   const childLogger = getLogger().child({
     traceId,
   });
-  (asyncStorage as AsyncLocalStorage<AsyncStorage>).enterWith({
+  asyncStorage.enterWith({
     traceId,
     logger: childLogger,
     serviceName,

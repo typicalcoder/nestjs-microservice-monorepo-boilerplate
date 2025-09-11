@@ -6,6 +6,6 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 export class DevOnly implements CanActivate {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   canActivate(_context: ExecutionContext): boolean {
-    return process.env.NODE_ENV !== EnvType.PROD;
+    return EnvType[process.env.NODE_ENV] !== EnvType.PROD;
   }
 }

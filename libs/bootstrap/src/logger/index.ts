@@ -10,7 +10,8 @@ const consoleTransport = new transports.Console({
     format.printf(
       info =>
         `${
-          info.timestamp ?? new Date().toISOString()
+          (info.timestamp && (info.timestamp as string)) ??
+          new Date().toISOString()
         } [${info.level.toUpperCase()}]  ${JSON.stringify(info, null, 4)}`,
     ),
     format.errors({ stack: true }),
@@ -48,23 +49,23 @@ export const getLogger = (): Logger => {
 };
 
 export class MyLogger implements LoggerService {
-  debug(message: any, ...optionalParams: any[]): any {
+  debug(message: string, ...optionalParams: any[]): any {
     logger.debug(message, optionalParams);
   }
 
-  error(message: any, ...optionalParams: any[]): any {
+  error(message: string, ...optionalParams: any[]): any {
     logger.error(message, optionalParams);
   }
 
-  log(message: any, ...optionalParams: any[]): any {
+  log(message: string, ...optionalParams: any[]): any {
     logger.log('info', message, optionalParams);
   }
 
-  verbose(message: any, ...optionalParams: any[]): any {
+  verbose(message: string, ...optionalParams: any[]): any {
     logger.verbose(message, optionalParams);
   }
 
-  warn(message: any, ...optionalParams: any[]): any {
+  warn(message: string, ...optionalParams: any[]): any {
     logger.warn(message, optionalParams);
   }
 }

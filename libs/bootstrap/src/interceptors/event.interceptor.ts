@@ -17,7 +17,10 @@ export class EventInterceptor implements NestInterceptor {
     if (context.getType() !== 'rpc') {
       return next.handle();
     }
-    const traceId = context.switchToRpc().getData()?.__traceId ?? randomUUID();
+    const data = context.switchToRpc().getData<object>();
+    const traceId: string =
+      ('__traceId' in data && data?.__traceId && (data?.__traceId as string)) ??
+      randomUUID();
     asyncStorage.enterWith({
       logger: getLogger().child({ traceId: traceId }),
       rpcContext: context.switchToRpc(),

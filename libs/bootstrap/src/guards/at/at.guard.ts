@@ -1,5 +1,6 @@
 import { I18nContext } from 'nestjs-i18n';
 import { LixException } from '@bootstrap/errors';
+import { LixRequest } from '@bootstrap/types';
 
 import { ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -12,19 +13,19 @@ export class AtGuard extends AuthGuard('jwt-access') {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const skipAtGuard = this.reflector.getAllAndOverride('skipAtGuard', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const skipAtGuard: boolean | undefined = this.reflector.getAllAndOverride(
+      'skipAtGuard',
+      [context.getHandler(), context.getClass()],
+    );
 
     if (skipAtGuard) {
       return true;
     }
 
-    const isPublic = this.reflector.getAllAndOverride('isPublic', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const isPublic: boolean | undefined = this.reflector.getAllAndOverride(
+      'isPublic',
+      [context.getHandler(), context.getClass()],
+    );
 
     if (isPublic) {
       return true;
@@ -32,7 +33,7 @@ export class AtGuard extends AuthGuard('jwt-access') {
 
     // TODO: check if Auth header empty drop grace error
     const http = context.switchToHttp();
-    const request = http.getRequest();
+    const request = http.getRequest<LixRequest>();
 
     if ('authorization' in request.headers) {
       return (await super.canActivate(context)) as boolean;

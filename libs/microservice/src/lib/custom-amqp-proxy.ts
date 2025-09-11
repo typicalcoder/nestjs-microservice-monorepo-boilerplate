@@ -1,4 +1,4 @@
-import { MicroservicesEnum } from '@bootstrap';
+import { MicroservicesEnum } from '@microservice';
 import { Observable } from 'rxjs';
 import { getAsyncStorage } from '@bootstrap/logger/asyncStorage';
 
@@ -17,9 +17,7 @@ export class CustomAmqpProxy<T extends MicroservicesEnum> extends ClientRMQ {
     payload: CommandPayload<T, U, 'req'>,
   ): Observable<CommandPayload<T, U, 'resp'>> {
     payload.__traceId = payload.__traceId ?? getAsyncStorage()?.traceId;
-    return this.send(command, payload) as Observable<
-      CommandPayload<T, U, 'resp'>
-    >;
+    return this.send(command, payload);
   }
 
   event<U extends Commands[T]>(
@@ -27,8 +25,6 @@ export class CustomAmqpProxy<T extends MicroservicesEnum> extends ClientRMQ {
     payload: CommandPayload<T, U, 'req'>,
   ): Observable<CommandPayload<T, U, 'resp'>> {
     payload.__traceId = payload.__traceId ?? getAsyncStorage()?.traceId;
-    return this.emit(command, payload) as Observable<
-      CommandPayload<T, U, 'resp'>
-    >;
+    return this.emit(command, payload);
   }
 }

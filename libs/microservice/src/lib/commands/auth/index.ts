@@ -40,10 +40,10 @@ export type AuthCommandPayload<T extends AuthCommands> =
         : never;
 
 export const AuthCommandTypeMap = {
-  AuthenticateCommandResponsePayload: AuthenticateCommandResponsePayload,
-  AuthenticateCommandRequestPayload: AuthenticateCommandRequestPayload,
-  RefreshTokenCommandResponsePayload: RefreshTokenCommandResponsePayload,
-  RefreshTokenCommandRequestPayload: RefreshTokenCommandRequestPayload,
-  RequestCodeCommandRequestPayload: RequestCodeCommandRequestPayload,
-  RequestCodeCommandResponsePayload: RequestCodeCommandResponsePayload,
+  AuthenticateCommandResponsePayload,
+  AuthenticateCommandRequestPayload,
+  RefreshTokenCommandResponsePayload,
+  RefreshTokenCommandRequestPayload,
+  RequestCodeCommandRequestPayload,
+  RequestCodeCommandResponsePayload,
 };

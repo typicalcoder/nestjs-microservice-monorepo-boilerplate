@@ -1,7 +1,7 @@
 import { isString } from 'class-validator';
 import { Observable, throwError } from 'rxjs';
 import { EnvType } from '@bootstrap/base-config';
-import { LixException, LixRpcException } from '@bootstrap/errors/errors';
+import LixRpcException, { LixException } from '@bootstrap/errors/errors';
 import { getLogger } from '@bootstrap/logger';
 import { getAsyncStorage } from '@bootstrap/logger/asyncStorage';
 
@@ -12,12 +12,13 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(private readonly serviceName?: string) {}
 
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: Error, host: ArgumentsHost): void | Observable<unknown> {
     if (host.getType() === 'http') {
       return this.catchHttp(exception, host);
     }
@@ -27,7 +28,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   catchHttp(exception: Error, host: ArgumentsHost): void {
-    const ctx = host.switchToHttp();
+    const ctx: HttpArgumentsHost = host.switchToHttp();
     const asyncStorage = getAsyncStorage();
     let lixException: LixException;
 
@@ -35,12 +36,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception = new LixException(
         'LixException',
         HttpStatus.INTERNAL_SERVER_ERROR,
-        `Nullable exception occurred`,
+        'Nullable exception occurred',
       );
     }
 
     if (exception['error']) {
-      exception = exception['error'];
+      exception = exception['error'] as Error;
     }
 
     if (isString(exception)) {
@@ -68,16 +69,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
     ) {
       lixException = new LixException(
         exception.name,
-        exception['status'],
+        'status' in exception &&
+          exception.status &&
+          (exception.status as number),
         exception.message,
         exception['payload'],
       );
     } else if ('code' in exception || 'message' in exception) {
       lixException = new LixException(
         exception.name ?? 'Internal server error',
-        (exception['code'] &&
-          Object.values(HttpStatus).includes(exception['code']) &&
-          exception['code']) ||
+        ('code' in exception &&
+          exception.code &&
+          Object.values(HttpStatus).includes(exception.code as number) &&
+          (exception.code as number)) ??
           HttpStatus.INTERNAL_SERVER_ERROR,
         exception.message ?? 'Internal server error',
         exception,
@@ -93,15 +97,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     ctx
       .getResponse()
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       .status(lixException.status)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       .send({
         error: { name: lixException.name, message: lixException.message },
-        ...(process.env.NODE_ENV !== EnvType.PROD && {
+        ...((process.env.NODE_ENV as EnvType) !== EnvType.PROD && {
           stack: lixException.stack,
           ...(lixException.originError
-            ? { origin: lixException.originError }
+            ? { origin: lixException.originError as Error }
             : {}),
         }),
         traceId: lixException.traceId ?? asyncStorage?.traceId,
@@ -110,12 +117,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
     getLogger().error(lixException);
   }
 
-  catchRpc(exception: any, host: ArgumentsHost): Observable<any> {
+  catchRpc(exception: Error, host: ArgumentsHost): Observable<any> {
     const rpc = host.switchToRpc();
 
     getLogger().error({
-      payload: rpc.getData(),
-      stacktrace: (exception as Error)?.stack,
+      payload: rpc.getData<unknown>(),
+      stacktrace: exception?.stack,
       serviceName: this.serviceName,
       message: String(exception),
       exception,

@@ -1,10 +1,7 @@
-import fs from 'fs';
-import { join } from 'path';
 import process from 'process';
 import { useContainer } from 'class-validator';
 import { selectConfig } from 'nest-typed-config';
 import { AllExceptionsFilter } from '@bootstrap/errors/all-exceptions.filter';
-import { MicroservicesEnum } from '@bootstrap/index';
 import { EventInterceptor } from '@bootstrap/interceptors/event.interceptor';
 import { enableCloudLogging, getLogger, MyLogger } from '@bootstrap/logger';
 
@@ -21,10 +18,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 import { BaseConfig, ConfigModuleFactory, EnvType } from './base-config';
 
-const packageJson = JSON.parse(
-  fs.readFileSync(join(process.cwd(), 'package.json'), 'utf8'),
-);
-
 @Global()
 @Module({
   imports: [
@@ -37,7 +30,7 @@ const packageJson = JSON.parse(
 })
 export class HttpModuleGlobal {}
 
-export async function bootstrapService<MsEnum extends MicroservicesEnum, T>(
+export async function bootstrapService<T>(
   module: Type<T>,
   configSchema: typeof BaseConfig,
   noAck = true,
@@ -99,7 +92,7 @@ export async function bootstrapService<MsEnum extends MicroservicesEnum, T>(
   await runApp(BootstrapModule, queue, config, noAck);
 }
 
-async function runApp<T, K>(
+async function runApp<T>(
   module: Type<T>,
   queue: string,
   config: BaseConfig,

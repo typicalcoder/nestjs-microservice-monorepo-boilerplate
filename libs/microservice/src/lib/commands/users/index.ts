@@ -40,10 +40,10 @@ export type UsersCommandPayload<T extends UsersCommands> =
         : never;
 
 export const UsersCommandTypeMap = {
-  GetUserCommandRequestPayload: GetUserCommandRequestPayload,
-  GetUserCommandResponsePayload: GetUserCommandResponsePayload,
-  ListUserCommandRequestPayload: ListUserCommandRequestPayload,
-  ListUserCommandResponsePayload: ListUserCommandResponsePayload,
-  CreateUserCommandRequestPayload: CreateUserCommandRequestPayload,
-  CreateUserCommandResponsePayload: CreateUserCommandResponsePayload,
+  GetUserCommandRequestPayload,
+  GetUserCommandResponsePayload,
+  ListUserCommandRequestPayload,
+  ListUserCommandResponsePayload,
+  CreateUserCommandRequestPayload,
+  CreateUserCommandResponsePayload,
 };

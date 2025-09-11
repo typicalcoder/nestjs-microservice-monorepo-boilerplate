@@ -1,11 +1,8 @@
-import { MicroservicesEnum } from '@bootstrap';
+import { MicroservicesEnum } from '@microservice';
 
 import { CustomAmqpProxy } from '@microservice/lib/custom-amqp-proxy';
 
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientRMQ } from '@nestjs/microservices';
-
-import { AppModule } from '../../auth/src/app.module';
 
 @Injectable()
 export class AppService {
