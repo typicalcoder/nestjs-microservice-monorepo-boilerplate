@@ -1,14 +1,14 @@
-import { ObjectId } from 'bson';
-import { LixRpcException } from '@bootstrap/errors';
-import { UserEntity } from '@bootstrap/repository/entities/user.entity';
+import { LixRpcException } from "@bootstrap/errors";
+import { UserEntity } from "@bootstrap/repository/entities/user.entity";
+import { ObjectId } from "bson";
 
-import { GetUserCommandRequestPayload } from '@microservice/lib/commands/users';
-import { CreateUserCommandRequestPayload } from '@microservice/lib/commands/users/create.users.command-payload';
+import { GetUserCommandRequestPayload } from "@microservice/lib/commands/users";
+import { CreateUserCommandRequestPayload } from "@microservice/lib/commands/users/create.users.command-payload";
 
-import { FilterQuery, ValidationError } from '@mikro-orm/core';
-import { EntityRepository } from '@mikro-orm/mongodb';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { FilterQuery, ValidationError } from "@mikro-orm/core";
+import { EntityRepository } from "@mikro-orm/mongodb";
+import { InjectRepository } from "@mikro-orm/nestjs";
+import { HttpStatus, Injectable } from "@nestjs/common";
 
 @Injectable()
 export class RepositoryService {

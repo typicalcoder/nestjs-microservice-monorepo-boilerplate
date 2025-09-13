@@ -1,6 +1,6 @@
-import { isDate, isString } from 'class-validator';
-import { parseISO } from 'date-fns';
-import { fromZonedTime } from 'date-fns-tz';
+import { isDate, isString } from "class-validator";
+import { parseISO } from "date-fns";
+import { fromZonedTime } from "date-fns-tz";
 
 export const ParseZonedDate = ({
   value,
@@ -13,9 +13,9 @@ export const ParseZonedDate = ({
   if (!isString(value)) {
     return;
   }
-  if (value.includes('Z')) {
+  if (value.includes("Z")) {
     return parseISO(value);
   } else {
-    return fromZonedTime(value, 'Europe/Moscow');
+    return fromZonedTime(value, "Europe/Moscow");
   }
 };

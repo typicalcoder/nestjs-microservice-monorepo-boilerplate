@@ -1,16 +1,16 @@
-import { Expose } from 'class-transformer';
-import { IsOptional, IsPhoneNumber, IsString } from 'class-validator';
-import { BaseEntity } from '@bootstrap/repository/base.entity';
+import { BaseEntity } from "@bootstrap/repository/base.entity";
+import { Expose } from "class-transformer";
+import { IsOptional, IsPhoneNumber, IsString } from "class-validator";
 
-import { Entity, Property } from '@mikro-orm/core';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Entity, Property } from "@mikro-orm/core";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
-@Entity({ collection: 'users' })
+@Entity({ collection: "users" })
 export class UserEntity extends BaseEntity {
   @ApiProperty()
   @Property()
   @Expose()
-  @IsPhoneNumber('RU')
+  @IsPhoneNumber("RU")
   phone!: string;
 
   @ApiPropertyOptional()

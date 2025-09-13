@@ -1,6 +1,6 @@
-import { MicroservicesEnum } from '@microservice';
-import { IsString, IsUrl } from 'class-validator';
-import { BaseConfig } from '@bootstrap/base-config';
+import { BaseConfig } from "@bootstrap/base-config";
+import { MicroservicesEnum } from "@microservice";
+import { IsString, IsUrl } from "class-validator";
 
 export class Config extends BaseConfig {
   @IsString()
@@ -15,10 +15,10 @@ export class Config extends BaseConfig {
   @IsString()
   YC_SMART_CAPTCHA_KEY!: string;
 
-  @IsUrl({ protocols: ['mongodb', 'mongodb+srv'], require_tld: false })
+  @IsUrl({ protocols: ["mongodb", "mongodb+srv"], require_tld: false })
   readonly MONGO: string;
 
-  @IsUrl({ protocols: ['redis', 'rediss'], require_tld: false })
+  @IsUrl({ protocols: ["redis", "rediss"], require_tld: false })
   readonly REDIS_URL: string;
 
   SERVICE_NAME = MicroservicesEnum.AUTH;

@@ -1,8 +1,8 @@
-import { MicroservicesEnum } from '@microservice';
+import { MicroservicesEnum } from "@microservice";
 
-import { CustomAmqpProxy } from '@microservice/lib/custom-amqp-proxy';
+import { CustomAmqpProxy } from "@microservice/lib/custom-amqp-proxy";
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from "@nestjs/common";
 
 @Injectable()
 export class AppService {
@@ -11,6 +11,6 @@ export class AppService {
     private readonly clientAuth: CustomAmqpProxy<MicroservicesEnum.AUTH>,
   ) {}
   getHello(): string {
-    return 'Hello World!';
+    return "Hello World!";
   }
 }

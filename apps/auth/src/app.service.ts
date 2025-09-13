@@ -1,39 +1,39 @@
-import { randomUUID } from 'crypto';
+import { EnvType } from "@bootstrap/base-config";
+import { LixRpcException } from "@bootstrap/errors";
+import { UserEntity } from "@bootstrap/repository/entities/user.entity";
 import {
   AuthenticateCommandRequestPayload,
   AuthenticateCommandResponsePayload,
   MicroservicesEnum,
   RefreshTokenCommandRequestPayload,
   RefreshTokenCommandResponsePayload,
-} from '@microservice';
-import { firstValueFrom } from 'rxjs';
-import { EnvType } from '@bootstrap/base-config';
-import { LixRpcException } from '@bootstrap/errors';
-import { UserEntity } from '@bootstrap/repository/entities/user.entity';
+} from "@microservice";
+import { randomUUID } from "crypto";
+import { firstValueFrom } from "rxjs";
 
 import {
   RequestCodeCommandRequestPayload,
   RequestCodeCommandResponsePayload,
-} from '@microservice/lib/commands/auth/request-code.command-payload';
+} from "@microservice/lib/commands/auth/request-code.command-payload";
 import {
   SendSmsCommandRequestPayload,
   SendSmsCommandResponsePayload,
   SmsCommands,
-} from '@microservice/lib/commands/sms';
+} from "@microservice/lib/commands/sms";
 import {
   GetUserCommandRequestPayload,
   UsersCommands,
-} from '@microservice/lib/commands/users';
-import { CreateUserCommandRequestPayload } from '@microservice/lib/commands/users/create.users.command-payload';
-import { CustomAmqpProxy } from '@microservice/lib/custom-amqp-proxy';
+} from "@microservice/lib/commands/users";
+import { CreateUserCommandRequestPayload } from "@microservice/lib/commands/users/create.users.command-payload";
+import { CustomAmqpProxy } from "@microservice/lib/custom-amqp-proxy";
 
-import { HttpService } from '@nestjs/axios';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { HttpService } from "@nestjs/axios";
+import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
+import { HttpStatus, Inject, Injectable } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 
-import { Config } from './config';
-import { RefreshService } from './refresh/refresh.service';
+import { Config } from "./config";
+import { RefreshService } from "./refresh/refresh.service";
 
 @Injectable()
 export class AppService {
@@ -84,7 +84,7 @@ export class AppService {
       return new RefreshTokenCommandResponsePayload(accessToken, refreshToken);
     } catch (error) {
       throw new LixRpcException(
-        'AccessForbidden',
+        "AccessForbidden",
         HttpStatus.FORBIDDEN,
         undefined,
         error,
@@ -99,7 +99,7 @@ export class AppService {
       this.config.NODE_ENV === EnvType.PROD &&
       !(await this.verifyCaptchaOrThrow(data.token, data.ip))
     ) {
-      throw new LixRpcException('AccessForbidden', HttpStatus.FORBIDDEN);
+      throw new LixRpcException("AccessForbidden", HttpStatus.FORBIDDEN);
     }
 
     let user: UserEntity;
@@ -164,11 +164,11 @@ export class AppService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: this.config.AT_SECRET,
-        expiresIn: this.config.JWT_LIFETIME || '15m',
+        expiresIn: this.config.JWT_LIFETIME || "15m",
       }),
       this.jwtService.signAsync(payload, {
         secret: this.config.RT_SECRET,
-        expiresIn: '14d',
+        expiresIn: "14d",
       }),
     ]);
 
@@ -181,7 +181,7 @@ export class AppService {
   async verifyCaptchaOrThrow(token: string, ip?: string): Promise<boolean> {
     try {
       const resp = await firstValueFrom(
-        this.httpService.get('https://smartcaptcha.yandexcloud.net/validate', {
+        this.httpService.get("https://smartcaptcha.yandexcloud.net/validate", {
           params: {
             secret: this.config.YC_SMART_CAPTCHA_KEY,
             token,
@@ -192,10 +192,10 @@ export class AppService {
 
       if (
         resp?.data &&
-        typeof resp.data === 'object' &&
+        typeof resp.data === "object" &&
         resp.data !== null &&
-        'status' in resp.data &&
-        (resp.data as { status: unknown }).status === 'ok'
+        "status" in resp.data &&
+        (resp.data as { status: unknown }).status === "ok"
       ) {
         return true;
       }
@@ -207,7 +207,7 @@ export class AppService {
   }
 
   async newOtpCode(phone: string): Promise<string> {
-    const code = `${Math.floor(Math.random() * 10000)}`.padStart(4, '0');
+    const code = `${Math.floor(Math.random() * 10000)}`.padStart(4, "0");
 
     await this.cacheManager.set(`otp:${phone}`, code, 600_000);
 
@@ -219,6 +219,6 @@ export class AppService {
     if (code !== null && codeToValidate === code) {
       return;
     }
-    throw new LixRpcException('InvalidCode', HttpStatus.FORBIDDEN);
+    throw new LixRpcException("InvalidCode", HttpStatus.FORBIDDEN);
   }
 }

@@ -5,16 +5,16 @@ import {
   MicroservicesEnum,
   RefreshTokenCommandRequestPayload,
   RefreshTokenCommandResponsePayload,
-} from '@microservice';
-import { Observable } from 'rxjs';
+} from "@microservice";
+import { Observable } from "rxjs";
 
 import {
   RequestCodeCommandRequestPayload,
   RequestCodeCommandResponsePayload,
-} from '@microservice/lib/commands/auth/request-code.command-payload';
-import { CustomAmqpProxy } from '@microservice/lib/custom-amqp-proxy';
+} from "@microservice/lib/commands/auth/request-code.command-payload";
+import { CustomAmqpProxy } from "@microservice/lib/custom-amqp-proxy";
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from "@nestjs/common";
 
 @Injectable()
 export class AuthService {

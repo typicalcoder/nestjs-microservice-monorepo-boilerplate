@@ -1,6 +1,6 @@
-import { MicroservicesEnum } from '@microservice';
-import { IsOptional, IsPort, IsString } from 'class-validator';
-import { BaseConfig } from '@bootstrap/base-config';
+import { BaseConfig } from "@bootstrap/base-config";
+import { MicroservicesEnum } from "@microservice";
+import { IsOptional, IsPort, IsString } from "class-validator";
 
 export class Config extends BaseConfig {
   @IsString() @IsOptional() SWAGGER_USER?: string;
@@ -9,7 +9,7 @@ export class Config extends BaseConfig {
   @IsString() AT_SECRET!: string;
   @IsString() RT_SECRET!: string;
 
-  @IsPort() readonly PORT: string = '3000';
+  @IsPort() readonly PORT: string = "3000";
 
   SERVICE_NAME = MicroservicesEnum.GATEWAY;
 }

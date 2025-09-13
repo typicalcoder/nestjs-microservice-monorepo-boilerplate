@@ -2,9 +2,9 @@ import {
   ConfigurableModuleBuilder,
   FactoryProvider,
   Module,
-} from '@nestjs/common';
+} from "@nestjs/common";
 
-import { AtConfig, AtStrategy } from './at.strategy';
+import { AtConfig, AtStrategy } from "./at.strategy";
 
 const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
   new ConfigurableModuleBuilder<AtConfig>().build();

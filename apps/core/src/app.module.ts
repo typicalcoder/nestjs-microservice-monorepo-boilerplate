@@ -1,14 +1,14 @@
-import { MicroservicesEnum } from '@microservice';
+import { MicroservicesEnum } from "@microservice";
 
-import { buildClientProvider } from '@microservice/lib/build-client-provider';
+import { buildClientProvider } from "@microservice/lib/build-client-provider";
 
-import { defineConfig, MongoDriver } from '@mikro-orm/mongodb';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Module } from '@nestjs/common';
+import { defineConfig, MongoDriver } from "@mikro-orm/mongodb";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
+import { Module } from "@nestjs/common";
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { Config } from './config';
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { Config } from "./config";
 
 @Module({
   imports: [

@@ -1,4 +1,4 @@
-import { isArray } from 'class-validator';
+import { isArray } from "class-validator";
 
 export const FilterEmptyArray = ({
   value,

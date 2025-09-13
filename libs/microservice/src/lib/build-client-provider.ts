@@ -1,12 +1,12 @@
-import { MicroservicesEnum } from '@microservice';
-import { selectConfig } from 'nest-typed-config';
-import { BaseConfig, ConfigModuleFactory } from '@bootstrap/base-config';
+import { BaseConfig, ConfigModuleFactory } from "@bootstrap/base-config";
+import { MicroservicesEnum } from "@microservice";
+import { selectConfig } from "nest-typed-config";
 
-import { CustomAmqpProxy } from '@microservice/lib/custom-amqp-proxy';
-import { RmqDeserializer } from '@microservice/lib/rmq-deserializer';
-import { RmqSerializer } from '@microservice/lib/rmq-serializer';
+import { CustomAmqpProxy } from "@microservice/lib/custom-amqp-proxy";
+import { RmqDeserializer } from "@microservice/lib/rmq-deserializer";
+import { RmqSerializer } from "@microservice/lib/rmq-serializer";
 
-import { Provider } from '@nestjs/common';
+import { Provider } from "@nestjs/common";
 
 export function buildClientProvider(
   service: MicroservicesEnum,

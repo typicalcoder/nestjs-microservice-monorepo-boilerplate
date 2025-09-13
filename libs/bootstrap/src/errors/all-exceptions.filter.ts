@@ -1,9 +1,9 @@
-import { isString } from 'class-validator';
-import { Observable, throwError } from 'rxjs';
-import { EnvType } from '@bootstrap/base-config';
-import LixRpcException, { LixException } from '@bootstrap/errors/errors';
-import { getLogger } from '@bootstrap/logger';
-import { getAsyncStorage } from '@bootstrap/logger/asyncStorage';
+import { EnvType } from "@bootstrap/base-config";
+import LixRpcException, { LixException } from "@bootstrap/errors/errors";
+import { getLogger } from "@bootstrap/logger";
+import { getAsyncStorage } from "@bootstrap/logger/asyncStorage";
+import { isString } from "class-validator";
+import { Observable, throwError } from "rxjs";
 
 import {
   ArgumentsHost,
@@ -11,18 +11,18 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces';
+} from "@nestjs/common";
+import { HttpArgumentsHost } from "@nestjs/common/interfaces";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(private readonly serviceName?: string) {}
 
   catch(exception: Error, host: ArgumentsHost): void | Observable<unknown> {
-    if (host.getType() === 'http') {
+    if (host.getType() === "http") {
       return this.catchHttp(exception, host);
     }
-    if (host.getType() === 'rpc') {
+    if (host.getType() === "rpc") {
       return this.catchRpc(exception, host);
     }
   }
@@ -34,19 +34,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (!exception) {
       exception = new LixException(
-        'LixException',
+        "LixException",
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Nullable exception occurred',
+        "Nullable exception occurred",
       );
     }
 
-    if (exception['error']) {
-      exception = exception['error'] as Error;
+    if (exception["error"]) {
+      exception = exception["error"] as Error;
     }
 
     if (isString(exception)) {
       lixException = new LixException(
-        'LixException',
+        "LixException",
         HttpStatus.INTERNAL_SERVER_ERROR,
         `${exception}`,
       );
@@ -59,40 +59,40 @@ export class AllExceptionsFilter implements ExceptionFilter {
         exception?.stack,
       );
     } else if (
-      '__internal_type' in exception &&
-      exception['__internal_type'] === 'LixException'
+      "__internal_type" in exception &&
+      exception["__internal_type"] === "LixException"
     ) {
       lixException = exception as LixException;
     } else if (
-      '__internal_type' in exception &&
-      exception['__internal_type'] === 'LixRpcException'
+      "__internal_type" in exception &&
+      exception["__internal_type"] === "LixRpcException"
     ) {
       lixException = new LixException(
         exception.name,
-        'status' in exception &&
+        "status" in exception &&
           exception.status &&
           (exception.status as number),
         exception.message,
-        exception['payload'],
+        exception["payload"],
       );
-    } else if ('code' in exception || 'message' in exception) {
+    } else if ("code" in exception || "message" in exception) {
       lixException = new LixException(
-        exception.name ?? 'Internal server error',
-        ('code' in exception &&
+        exception.name ?? "Internal server error",
+        ("code" in exception &&
           exception.code &&
           Object.values(HttpStatus).includes(exception.code as number) &&
           (exception.code as number)) ??
           HttpStatus.INTERNAL_SERVER_ERROR,
-        exception.message ?? 'Internal server error',
+        exception.message ?? "Internal server error",
         exception,
       );
     }
 
     if (lixException === undefined) {
       lixException = new LixException(
-        'InternalServerError',
+        "InternalServerError",
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Internal server error',
+        "Internal server error",
         exception,
       );
     }
@@ -130,14 +130,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     let err = exception;
 
-    if (!('__internal_type' in exception)) {
+    if (!("__internal_type" in exception)) {
       err =
-        'error' in exception
+        "error" in exception
           ? LixRpcException.from(exception.error)
           : new LixRpcException(
-              exception['name'] ?? 'UnhandledError',
+              exception["name"] ?? "UnhandledError",
               HttpStatus.INTERNAL_SERVER_ERROR,
-              exception['message'],
+              exception["message"],
               exception,
               this.serviceName,
             );

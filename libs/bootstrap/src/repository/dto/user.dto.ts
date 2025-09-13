@@ -1,11 +1,11 @@
-import { IsOptional, IsPhoneNumber, IsString } from 'class-validator';
-import { BaseDto } from '@bootstrap/repository/base.dto';
+import { BaseDto } from "@bootstrap/repository/base.dto";
+import { IsOptional, IsPhoneNumber, IsString } from "class-validator";
 
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class UserDto extends BaseDto {
   @ApiProperty()
-  @IsPhoneNumber('RU')
+  @IsPhoneNumber("RU")
   phone!: string;
 
   @ApiPropertyOptional()

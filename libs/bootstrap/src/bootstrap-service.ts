@@ -1,28 +1,28 @@
-import process from 'process';
-import { useContainer } from 'class-validator';
-import { selectConfig } from 'nest-typed-config';
-import { AllExceptionsFilter } from '@bootstrap/errors/all-exceptions.filter';
-import { EventInterceptor } from '@bootstrap/interceptors/event.interceptor';
-import { enableCloudLogging, getLogger, MyLogger } from '@bootstrap/logger';
+import { AllExceptionsFilter } from "@bootstrap/errors/all-exceptions.filter";
+import { EventInterceptor } from "@bootstrap/interceptors/event.interceptor";
+import { enableCloudLogging, getLogger, MyLogger } from "@bootstrap/logger";
+import { useContainer } from "class-validator";
+import { selectConfig } from "nest-typed-config";
+import process from "process";
 
-import { buildClientProvider } from '@microservice/lib/build-client-provider';
-import { CustomAmqpProxy } from '@microservice/lib/custom-amqp-proxy';
-import { RmqDeserializer } from '@microservice/lib/rmq-deserializer';
-import { RmqSerializer } from '@microservice/lib/rmq-serializer';
+import { buildClientProvider } from "@microservice/lib/build-client-provider";
+import { CustomAmqpProxy } from "@microservice/lib/custom-amqp-proxy";
+import { RmqDeserializer } from "@microservice/lib/rmq-deserializer";
+import { RmqSerializer } from "@microservice/lib/rmq-serializer";
 
-import { HttpModule } from '@nestjs/axios';
-import { DynamicModule, Global, Module, Type } from '@nestjs/common';
-import { APP_FILTER, APP_INTERCEPTOR, NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ScheduleModule } from '@nestjs/schedule';
+import { HttpModule } from "@nestjs/axios";
+import { DynamicModule, Global, Module, Type } from "@nestjs/common";
+import { APP_FILTER, APP_INTERCEPTOR, NestFactory } from "@nestjs/core";
+import { MicroserviceOptions, Transport } from "@nestjs/microservices";
+import { ScheduleModule } from "@nestjs/schedule";
 
-import { BaseConfig, ConfigModuleFactory, EnvType } from './base-config';
+import { BaseConfig, ConfigModuleFactory, EnvType } from "./base-config";
 
 @Global()
 @Module({
   imports: [
     HttpModule.register({
-      headers: { 'Accept-Encoding': 'gzip,deflate,compress' },
+      headers: { "Accept-Encoding": "gzip,deflate,compress" },
       global: true,
     }),
   ],
@@ -35,14 +35,14 @@ export async function bootstrapService<T>(
   configSchema: typeof BaseConfig,
   noAck = true,
 ): Promise<void> {
-  process.on('unhandledRejection', (reason: unknown) => {
+  process.on("unhandledRejection", (reason: unknown) => {
     reason =
       reason instanceof Error
         ? { name: reason?.name, message: reason?.message, stack: reason?.stack }
         : reason;
     getLogger().error(
       JSON.stringify({
-        message: 'Unhandled rejection',
+        message: "Unhandled rejection",
         reason,
       }),
     );

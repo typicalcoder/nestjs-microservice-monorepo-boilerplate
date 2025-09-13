@@ -1,7 +1,7 @@
-import * as QueryString from 'querystring';
-import * as express from 'express';
-import { UserEntity } from '@bootstrap/repository/entities/user.entity';
-import { JwtPayload } from '@bootstrap/types/jwtPayload.type';
+import { UserEntity } from "@bootstrap/repository/entities/user.entity";
+import { JwtPayload } from "@bootstrap/types/jwtPayload.type";
+import * as express from "express";
+import * as QueryString from "querystring";
 
 export type RequestUserInfo = JwtPayload & {
   entity: UserEntity;

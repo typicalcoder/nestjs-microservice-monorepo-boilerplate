@@ -1,20 +1,20 @@
-import { join } from 'path';
-import { MicroservicesEnum } from '@microservice';
-import { ClassConstructor } from 'class-transformer';
-import { IsEnum, IsOptional, IsPort, IsString, IsUrl } from 'class-validator';
+import { LixException } from "@bootstrap/errors";
+import { MicroservicesEnum } from "@microservice";
+import { ClassConstructor } from "class-transformer";
+import { IsEnum, IsOptional, IsPort, IsString, IsUrl } from "class-validator";
 import {
   dotenvLoader,
   selectConfig,
   TypedConfigModule,
-} from 'nest-typed-config';
-import { LixException } from '@bootstrap/errors';
+} from "nest-typed-config";
+import { join } from "path";
 
-import { DynamicModule, Injectable } from '@nestjs/common';
+import { DynamicModule, Injectable } from "@nestjs/common";
 
 export enum EnvType {
-  LOCAL = 'LOCAL',
-  DEV = 'DEV',
-  PROD = 'PROD',
+  LOCAL = "LOCAL",
+  DEV = "DEV",
+  PROD = "PROD",
 }
 
 @Injectable()
@@ -22,7 +22,7 @@ export class BaseConfig {
   @IsEnum(EnvType)
   readonly NODE_ENV!: EnvType;
 
-  @IsUrl({ protocols: ['mongodb', 'mongodb+srv'], require_tld: false })
+  @IsUrl({ protocols: ["mongodb", "mongodb+srv"], require_tld: false })
   @IsOptional()
   readonly MONGO?: string;
 
@@ -30,10 +30,10 @@ export class BaseConfig {
   @IsOptional()
   readonly POD_NAME?: string;
 
-  @IsUrl({ protocols: ['amqp'], require_tld: false })
+  @IsUrl({ protocols: ["amqp"], require_tld: false })
   readonly RABBIT_MQ!: string;
 
-  @IsPort() @IsOptional() readonly SERVICE_PORT: string = '3000';
+  @IsPort() @IsOptional() readonly SERVICE_PORT: string = "3000";
 
   @IsString()
   protected readonly SERVICE_NAME!: MicroservicesEnum;
@@ -44,7 +44,7 @@ export class BaseConfig {
         this.SERVICE_NAME.toUpperCase() as MicroservicesEnum,
       )
     ) {
-      throw new LixException('NotValidServiceName');
+      throw new LixException("NotValidServiceName");
     }
     return MicroservicesEnum[this.SERVICE_NAME];
   }
@@ -70,7 +70,7 @@ export function ConfigModuleFactory<T extends typeof BaseConfig>(
       dotenvLoader({
         envFilePath:
           filepath ??
-          join(process.cwd(), './secrets/.env').replace('/dist', ''),
+          join(process.cwd(), "./secrets/.env").replace("/dist", ""),
         ignoreEnvVars: false,
       }),
     ],

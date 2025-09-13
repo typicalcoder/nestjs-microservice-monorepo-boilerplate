@@ -4,17 +4,17 @@ import {
   AuthenticateCommandResponsePayload,
   RefreshTokenCommandRequestPayload,
   RefreshTokenCommandResponsePayload,
-} from '@microservice';
+} from "@microservice";
 
 import {
   RequestCodeCommandRequestPayload,
   RequestCodeCommandResponsePayload,
-} from '@microservice/lib/commands/auth/request-code.command-payload';
+} from "@microservice/lib/commands/auth/request-code.command-payload";
 
-import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Controller } from "@nestjs/common";
+import { MessagePattern, Payload } from "@nestjs/microservices";
 
-import { AppService } from './app.service';
+import { AppService } from "./app.service";
 
 @Controller()
 export class AppController {

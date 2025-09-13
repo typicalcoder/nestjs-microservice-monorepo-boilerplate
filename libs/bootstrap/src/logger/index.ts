@@ -1,14 +1,14 @@
-import { createLogger, format, Logger, transports } from 'winston';
-import { getAsyncStorage } from '@bootstrap/logger/asyncStorage';
+import { getAsyncStorage } from "@bootstrap/logger/asyncStorage";
+import { createLogger, format, Logger, transports } from "winston";
 
-import { LoggerService } from '@nestjs/common';
+import { LoggerService } from "@nestjs/common";
 
 export const logger = createLogger();
 
 const consoleTransport = new transports.Console({
   format: format.combine(
     format.printf(
-      info =>
+      (info) =>
         `${
           (info.timestamp && (info.timestamp as string)) ??
           new Date().toISOString()
@@ -24,12 +24,12 @@ logger.add(consoleTransport);
 export function enableCloudLogging(): void {
   const ycTransport = new transports.Console({
     format: format.combine(
-      format(info => {
+      format((info) => {
         info.severity = info.level;
         return info;
       })(),
       format.json({
-        circularValue: 'circular',
+        circularValue: "circular",
         maximumDepth: 999,
       }),
       format.errors({ stack: true }),
@@ -58,7 +58,7 @@ export class MyLogger implements LoggerService {
   }
 
   log(message: string, ...optionalParams: any[]): any {
-    logger.log('info', message, optionalParams);
+    logger.log("info", message, optionalParams);
   }
 
   verbose(message: string, ...optionalParams: any[]): any {

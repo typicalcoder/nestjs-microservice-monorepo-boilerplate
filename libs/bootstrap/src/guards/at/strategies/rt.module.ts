@@ -2,9 +2,9 @@ import {
   ConfigurableModuleBuilder,
   FactoryProvider,
   Module,
-} from '@nestjs/common';
+} from "@nestjs/common";
 
-import { RtConfig, RtStrategy } from './rt.strategy';
+import { RtConfig, RtStrategy } from "./rt.strategy";
 
 const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
   new ConfigurableModuleBuilder<RtConfig>().build();

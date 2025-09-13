@@ -1,8 +1,8 @@
-import { Response } from 'express';
-import { getLogger } from '@bootstrap/logger';
-import { LixRequest } from '@bootstrap/types/request.type';
+import { getLogger } from "@bootstrap/logger";
+import { LixRequest } from "@bootstrap/types/request.type";
+import { Response } from "express";
 
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, NestMiddleware } from "@nestjs/common";
 
 @Injectable()
 export class RequestLoggingMiddleware implements NestMiddleware {
@@ -13,7 +13,7 @@ export class RequestLoggingMiddleware implements NestMiddleware {
     const path = req.originalUrl;
     const method = req.method;
     const now = Date.now();
-    res.on('finish', () => {
+    res.on("finish", () => {
       getLogger().info(
         `${method} ${path} ${res.statusCode} ${Date.now() - now}ms`,
         {

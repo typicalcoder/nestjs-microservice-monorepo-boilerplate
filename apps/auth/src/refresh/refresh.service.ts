@@ -1,11 +1,11 @@
-import { ObjectId } from 'bson';
-import { LixRpcException } from '@bootstrap/errors';
+import { LixRpcException } from "@bootstrap/errors";
+import { ObjectId } from "bson";
 
-import { EntityRepository } from '@mikro-orm/mongodb';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { EntityRepository } from "@mikro-orm/mongodb";
+import { InjectRepository } from "@mikro-orm/nestjs";
+import { HttpStatus, Injectable } from "@nestjs/common";
 
-import { RefreshTokenEntity } from './refresh-token.entity';
+import { RefreshTokenEntity } from "./refresh-token.entity";
 
 @Injectable()
 export class RefreshService {
@@ -44,9 +44,9 @@ export class RefreshService {
         .flush();
     } catch (e) {
       throw new LixRpcException(
-        'RefreshInvalidateFailed',
+        "RefreshInvalidateFailed",
         HttpStatus.INTERNAL_SERVER_ERROR,
-        'Refresh token was not invalidated',
+        "Refresh token was not invalidated",
         e,
       );
     }

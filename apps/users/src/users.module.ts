@@ -1,10 +1,10 @@
-import { defineConfig, MongoDriver } from '@mikro-orm/mongodb';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Module } from '@nestjs/common';
+import { defineConfig, MongoDriver } from "@mikro-orm/mongodb";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
+import { Module } from "@nestjs/common";
 
-import { Config } from './config';
-import { RepositoryModule } from './repository/repository.module';
-import { UsersService } from './users.service';
+import { Config } from "./config";
+import { RepositoryModule } from "./repository/repository.module";
+import { UsersService } from "./users.service";
 
 @Module({
   imports: [

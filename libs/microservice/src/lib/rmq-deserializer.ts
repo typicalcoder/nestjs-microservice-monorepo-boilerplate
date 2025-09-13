@@ -1,11 +1,11 @@
-import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { isObject, isString } from 'class-validator';
-import { LixRpcException } from '@bootstrap/errors';
+import { LixRpcException } from "@bootstrap/errors";
+import { ClassConstructor, plainToInstance } from "class-transformer";
+import { isObject, isString } from "class-validator";
 
-import { typeMap } from '@microservice/lib/commands';
+import { typeMap } from "@microservice/lib/commands";
 
-import { Logger } from '@nestjs/common';
-import { Deserializer } from '@nestjs/microservices/interfaces/deserializer.interface';
+import { Logger } from "@nestjs/common";
+import { Deserializer } from "@nestjs/microservices/interfaces/deserializer.interface";
 
 export class RmqDeserializer implements Deserializer {
   logger = new Logger(RmqDeserializer.name);
@@ -13,7 +13,7 @@ export class RmqDeserializer implements Deserializer {
   deserialize(value: unknown): any {
     if (value && isObject(value)) {
       // Проверяем наличие ошибки в значении
-      if ('err' in value) {
+      if ("err" in value) {
         return {
           ...value,
           err: LixRpcException.from(value.err),
@@ -22,9 +22,9 @@ export class RmqDeserializer implements Deserializer {
 
       // Проверяем наличие данных с внутренним типом
       if (
-        'data' in value &&
+        "data" in value &&
         isObject(value.data) &&
-        '__internal_type' in value.data &&
+        "__internal_type" in value.data &&
         isString(value.data.__internal_type) &&
         value.data.__internal_type in typeMap
       ) {
@@ -43,9 +43,9 @@ export class RmqDeserializer implements Deserializer {
 
       // Проверяем наличие ответа с внутренним типом
       if (
-        'response' in value &&
+        "response" in value &&
         isObject(value.response) &&
-        '__internal_type' in value.response &&
+        "__internal_type" in value.response &&
         isString(value.response.__internal_type) &&
         value.response.__internal_type in typeMap
       ) {

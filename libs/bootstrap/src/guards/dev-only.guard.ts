@@ -1,6 +1,6 @@
-import { EnvType } from '@bootstrap/base-config';
+import { EnvType } from "@bootstrap/base-config";
 
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 
 @Injectable()
 export class DevOnly implements CanActivate {

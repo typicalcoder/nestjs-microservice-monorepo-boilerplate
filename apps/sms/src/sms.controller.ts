@@ -2,12 +2,12 @@ import {
   SendSmsCommandRequestPayload,
   SendSmsCommandResponsePayload,
   SmsCommands,
-} from '@microservice/lib/commands/sms';
+} from "@microservice/lib/commands/sms";
 
-import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Controller } from "@nestjs/common";
+import { MessagePattern, Payload } from "@nestjs/microservices";
 
-import { SmsService } from './sms.service';
+import { SmsService } from "./sms.service";
 
 @Controller()
 export class SmsController {

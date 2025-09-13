@@ -1,12 +1,12 @@
-import { MicroservicesEnum } from '@microservice';
+import { MicroservicesEnum } from "@microservice";
 
-import { buildClientProvider } from '@microservice/lib/build-client-provider';
+import { buildClientProvider } from "@microservice/lib/build-client-provider";
 
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 
-import { Config } from '../config';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { Config } from "../config";
+import { AuthController } from "./auth.controller";
+import { AuthService } from "./auth.service";
 
 @Module({
   providers: [

@@ -1,24 +1,24 @@
-import { CurrentUser, CurrentUserId } from '@bootstrap/decorators';
-import { RequestUserInfo } from '@bootstrap/types';
+import { CurrentUser, CurrentUserId } from "@bootstrap/decorators";
+import { RequestUserInfo } from "@bootstrap/types";
 
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
-} from '@nestjs/swagger';
+} from "@nestjs/swagger";
 
-import { UserProfileResponseDto } from './dto/user-profile.response.dto';
-import { UserService } from './user.service';
+import { UserProfileResponseDto } from "./dto/user-profile.response.dto";
+import { UserService } from "./user.service";
 
 @ApiBearerAuth()
-@Controller('user')
+@Controller("user")
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ApiOperation({
-    summary: 'Получить информацию о текущем пользователе',
+    summary: "Получить информацию о текущем пользователе",
   })
   @ApiOkResponse({
     type: UserProfileResponseDto,
@@ -29,20 +29,20 @@ export class UserController {
   }
 
   @ApiOperation({
-    summary: 'Получить информацию о пользователе по ID',
+    summary: "Получить информацию о пользователе по ID",
   })
   @ApiOkResponse({
     type: UserProfileResponseDto,
   })
   @ApiParam({
-    name: 'id',
+    name: "id",
     required: true,
-    description: 'Идентификатор пользователя',
+    description: "Идентификатор пользователя",
   })
-  @Get(':id')
+  @Get(":id")
   get(
     @CurrentUser() reqUser: RequestUserInfo,
-    @Param('id') userId: string,
+    @Param("id") userId: string,
   ): any {
     return this.userService.get(userId);
   }

@@ -1,10 +1,14 @@
-import { firstValueFrom } from 'rxjs';
-import { getLogger } from '@bootstrap/logger';
+import { getLogger } from "@bootstrap/logger";
+import { firstValueFrom } from "rxjs";
 
-import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException, OnApplicationBootstrap, } from '@nestjs/common';
+import { HttpService } from "@nestjs/axios";
+import {
+  Injectable,
+  InternalServerErrorException,
+  OnApplicationBootstrap,
+} from "@nestjs/common";
 
-import { Config } from './config';
+import { Config } from "./config";
 
 @Injectable()
 export class SmsService implements OnApplicationBootstrap {
@@ -15,8 +19,8 @@ export class SmsService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap(): Promise<void> {
     if (!(await this.testKey())) {
-      getLogger().error('SMS.RU Key invalid');
-      throw new InternalServerErrorException('SmsServiceStartFailed');
+      getLogger().error("SMS.RU Key invalid");
+      throw new InternalServerErrorException("SmsServiceStartFailed");
     }
   }
 
@@ -30,14 +34,14 @@ export class SmsService implements OnApplicationBootstrap {
 
       return (
         resp?.data &&
-        typeof resp.data === 'object' &&
+        typeof resp.data === "object" &&
         true &&
-        'status' in resp.data &&
+        "status" in resp.data &&
         (
           resp.data as {
             status: unknown;
           }
-        ).status === 'OK'
+        ).status === "OK"
       );
     } catch {
       /* empty */
@@ -55,13 +59,13 @@ export class SmsService implements OnApplicationBootstrap {
 
       if (
         resp?.data &&
-        typeof resp.data === 'object' &&
-        'status' in resp.data &&
-        (resp.data as { status: unknown }).status === 'OK' &&
-        'balance' in resp.data
+        typeof resp.data === "object" &&
+        "status" in resp.data &&
+        (resp.data as { status: unknown }).status === "OK" &&
+        "balance" in resp.data
       ) {
         const balanceData = resp.data as { balance: unknown };
-        return typeof balanceData.balance === 'number'
+        return typeof balanceData.balance === "number"
           ? balanceData.balance
           : -1;
       }
@@ -75,15 +79,15 @@ export class SmsService implements OnApplicationBootstrap {
     try {
       const resp = await firstValueFrom(
         this.httpService.get(
-          `https://sms.ru/sms/send?api_id=${this.config.SMSRU_API_KEY}&to=${phone}&msg=${encodeURIComponent(msg)}&json=1&from=BUDDJET${ip ? '&ip=' + ip : ''}&partner_id=191553`,
+          `https://sms.ru/sms/send?api_id=${this.config.SMSRU_API_KEY}&to=${phone}&msg=${encodeURIComponent(msg)}&json=1&from=BUDDJET${ip ? "&ip=" + ip : ""}&partner_id=191553`,
         ),
       );
 
       if (
         resp?.data &&
-        typeof resp.data === 'object' &&
-        'status' in resp.data &&
-        (resp.data as { status: unknown }).status === 'OK'
+        typeof resp.data === "object" &&
+        "status" in resp.data &&
+        (resp.data as { status: unknown }).status === "OK"
       ) {
         return (resp.data as { balance: number }).balance ?? -1;
       }

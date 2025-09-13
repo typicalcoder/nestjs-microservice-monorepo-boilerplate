@@ -1,13 +1,13 @@
-import { plainToInstance } from 'class-transformer';
-import { UserEntity } from '@bootstrap/repository/entities/user.entity';
+import { UserEntity } from "@bootstrap/repository/entities/user.entity";
+import { plainToInstance } from "class-transformer";
 
-import { PickType } from '@nestjs/swagger';
+import { PickType } from "@nestjs/swagger";
 
 export class UserProfileResponseDto extends PickType(UserEntity, [
-  'createdAt',
-  'name',
-  'phone',
-  'id',
+  "createdAt",
+  "name",
+  "phone",
+  "id",
 ]) {
   static fromEntity(ent: UserEntity): UserProfileResponseDto {
     return plainToInstance(UserProfileResponseDto, ent, {

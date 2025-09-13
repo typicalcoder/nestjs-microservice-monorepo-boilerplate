@@ -1,19 +1,19 @@
-import { MicroservicesEnum } from '@microservice';
+import { MicroservicesEnum } from "@microservice";
 
-import { buildClientProvider } from '@microservice/lib/build-client-provider';
+import { buildClientProvider } from "@microservice/lib/build-client-provider";
 
-import KeyvRedis, { RedisClientOptions } from '@keyv/redis';
-import { defineConfig, MongoDriver } from '@mikro-orm/mongodb';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { CacheModule } from '@nestjs/cache-manager';
-import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import KeyvRedis, { RedisClientOptions } from "@keyv/redis";
+import { defineConfig, MongoDriver } from "@mikro-orm/mongodb";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
+import { CacheModule } from "@nestjs/cache-manager";
+import { Module } from "@nestjs/common";
+import { JwtModule } from "@nestjs/jwt";
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { Config } from './config';
-import { RefreshTokenEntity } from './refresh/refresh-token.entity';
-import { RefreshService } from './refresh/refresh.service';
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { Config } from "./config";
+import { RefreshTokenEntity } from "./refresh/refresh-token.entity";
+import { RefreshService } from "./refresh/refresh.service";
 
 @Module({
   imports: [

@@ -1,9 +1,9 @@
-import { isNotEmptyObject, isObject } from 'class-validator';
+import { isNotEmptyObject, isObject } from "class-validator";
 
-import { HttpStatus } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { HttpStatus } from "@nestjs/common";
+import { RpcException } from "@nestjs/microservices";
 
-import { getAsyncStorage } from '../logger/asyncStorage';
+import { getAsyncStorage } from "../logger/asyncStorage";
 
 class LixRpcException extends RpcException {
   constructor(
@@ -17,25 +17,25 @@ class LixRpcException extends RpcException {
     super({
       message,
       name,
-      __internal_type: 'LixRpcException' as const,
+      __internal_type: "LixRpcException" as const,
       status,
       payload: isNotEmptyObject(data)
-        ? ((data['error'] as unknown) ?? payload)
+        ? ((data["error"] as unknown) ?? payload)
         : undefined,
       serviceName: serviceName ?? getAsyncStorage()?.serviceName,
     });
   }
 
   static from(e: unknown): LixRpcException {
-    if (isObject(e) && 'error' in e) {
-      return LixRpcException.from(e['error']);
+    if (isObject(e) && "error" in e) {
+      return LixRpcException.from(e["error"]);
     }
     return new LixRpcException(
-      e['name'] as string,
-      e['status'] as number,
-      e['message'] ? (e['message'] as string) : undefined,
-      e['payload'],
-      e['serviceName'] ? (e['serviceName'] as string) : undefined,
+      e["name"] as string,
+      e["status"] as number,
+      e["message"] ? (e["message"] as string) : undefined,
+      e["payload"],
+      e["serviceName"] ? (e["serviceName"] as string) : undefined,
     );
   }
 }
@@ -43,7 +43,7 @@ class LixRpcException extends RpcException {
 export default LixRpcException;
 
 export class LixException extends Error {
-  __internal_type = 'LixException' as const;
+  __internal_type = "LixException" as const;
   name: string;
   message: string;
   status: number;
@@ -63,21 +63,21 @@ export class LixException extends Error {
       e = undefined;
     }
 
-    const eMessage = e && e['message'] && (e['message'] as string),
-      eStatus = e && e['status'] && (e['status'] as number),
-      eBody = e && e['body'] && (e['body'] as unknown);
+    const eMessage = e && e["message"] && (e["message"] as string),
+      eStatus = e && e["status"] && (e["status"] as number),
+      eBody = e && e["body"] && (e["body"] as unknown);
 
     this.name = name;
     this.message = message ?? eMessage;
     this.status = status ?? eStatus ?? HttpStatus.INTERNAL_SERVER_ERROR;
-    this.stack = stack ?? (e && e['stack'] && (e['stack'] as string));
+    this.stack = stack ?? (e && e["stack"] && (e["stack"] as string));
     this.originError = e;
     this.traceId =
       getAsyncStorage()?.traceId ??
       (eBody &&
         isObject(eBody) &&
-        eBody['traceId'] &&
-        (eBody['traceId'] as string));
+        eBody["traceId"] &&
+        (eBody["traceId"] as string));
 
     Object.setPrototypeOf(this, LixException);
   }

@@ -1,29 +1,29 @@
+import { CurrentUser, CurrentUserId, Public } from "@bootstrap/decorators";
+import { RtGuard } from "@bootstrap/guards";
 import {
   AuthenticateCommandRequestPayload,
   AuthenticateCommandResponsePayload,
   RefreshTokenCommandResponsePayload,
-} from '@microservice';
-import { Observable } from 'rxjs';
-import { CurrentUser, CurrentUserId, Public } from '@bootstrap/decorators';
-import { RtGuard } from '@bootstrap/guards';
+} from "@microservice";
+import { Observable } from "rxjs";
 
 import {
   RequestCodeCommandRequestPayload,
   RequestCodeCommandResponsePayload,
-} from '@microservice/lib/commands/auth/request-code.command-payload';
+} from "@microservice/lib/commands/auth/request-code.command-payload";
 
-import { Body, Controller, Headers, Ip, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Headers, Ip, Post, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiExtraModels,
   ApiOperation,
   getSchemaPath,
-} from '@nestjs/swagger';
+} from "@nestjs/swagger";
 
-import { AuthService } from './auth.service';
+import { AuthService } from "./auth.service";
 
-@Controller('auth')
+@Controller("auth")
 @ApiExtraModels(RequestCodeCommandRequestPayload)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -32,14 +32,14 @@ export class AuthController {
     requestBody: {
       $ref: getSchemaPath(RequestCodeCommandRequestPayload),
     },
-    summary: 'Запрос кода авторизации',
+    summary: "Запрос кода авторизации",
   })
   @Public()
-  @Post('code')
+  @Post("code")
   requestCode(
     @Body() dto: RequestCodeCommandRequestPayload,
     @Ip() ipDirect: string,
-    @Headers('CF-Connecting-IP') ipCf?: string,
+    @Headers("CF-Connecting-IP") ipCf?: string,
   ): Observable<RequestCodeCommandResponsePayload> {
     dto.ip = ipCf ?? ipDirect;
     return this.authService.code(dto);
@@ -49,10 +49,10 @@ export class AuthController {
     requestBody: {
       $ref: getSchemaPath(AuthenticateCommandRequestPayload),
     },
-    summary: 'Авторизация',
+    summary: "Авторизация",
   })
   @Public()
-  @Post('auth')
+  @Post("auth")
   auth(
     @Body() dto: AuthenticateCommandRequestPayload,
     //@Ip() ipDirect: string,
@@ -63,10 +63,10 @@ export class AuthController {
   }
 
   @ApiOperation({
-    summary: 'Обновление JWT',
+    summary: "Обновление JWT",
   })
   @Public()
-  @Post('refresh')
+  @Post("refresh")
   @UseGuards(RtGuard)
   @ApiBearerAuth()
   @ApiCreatedResponse({
@@ -74,7 +74,7 @@ export class AuthController {
   })
   refresh(
     @CurrentUserId() userId: string,
-    @CurrentUser('refreshToken') refreshToken: string,
+    @CurrentUser("refreshToken") refreshToken: string,
   ): Observable<RefreshTokenCommandResponsePayload> {
     return this.authService.refresh(userId, refreshToken);
   }

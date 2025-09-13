@@ -1,15 +1,15 @@
-import type { Request } from 'express';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { LixException } from '@bootstrap/errors';
-import { JwtPayload, JwtPayloadWithRt } from '@bootstrap/types';
+import { LixException } from "@bootstrap/errors";
+import { JwtPayload, JwtPayloadWithRt } from "@bootstrap/types";
+import type { Request } from "express";
+import { ExtractJwt, Strategy } from "passport-jwt";
 
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
+import { HttpStatus, Injectable } from "@nestjs/common";
+import { PassportStrategy } from "@nestjs/passport";
 
 export type RtConfig = { RT_SECRET: string };
 
 @Injectable()
-export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class RtStrategy extends PassportStrategy(Strategy, "jwt-refresh") {
   constructor(config: RtConfig) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -20,12 +20,12 @@ export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
 
   validate(req: Request, payload: JwtPayload): JwtPayloadWithRt {
     const refreshToken = req
-      ?.get('authorization')
-      ?.replace(/^Bearer/i, '')
+      ?.get("authorization")
+      ?.replace(/^Bearer/i, "")
       .trim();
 
     if (!refreshToken) {
-      throw new LixException('RefreshTokenMalformed', HttpStatus.BAD_REQUEST);
+      throw new LixException("RefreshTokenMalformed", HttpStatus.BAD_REQUEST);
     }
 
     return {

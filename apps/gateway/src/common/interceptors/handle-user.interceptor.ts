@@ -1,12 +1,12 @@
-import { MicroservicesEnum } from '@microservice';
-import { firstValueFrom } from 'rxjs';
-import { LixRequest } from '@bootstrap/types';
+import { LixRequest } from "@bootstrap/types";
+import { MicroservicesEnum } from "@microservice";
+import { firstValueFrom } from "rxjs";
 
 import {
   GetUserCommandRequestPayload,
   UsersCommands,
-} from '@microservice/lib/commands/users';
-import { CustomAmqpProxy } from '@microservice/lib/custom-amqp-proxy';
+} from "@microservice/lib/commands/users";
+import { CustomAmqpProxy } from "@microservice/lib/custom-amqp-proxy";
 
 import {
   CallHandler,
@@ -14,7 +14,7 @@ import {
   Inject,
   Injectable,
   NestInterceptor,
-} from '@nestjs/common';
+} from "@nestjs/common";
 
 @Injectable()
 export class HandleUserInterceptor implements NestInterceptor {

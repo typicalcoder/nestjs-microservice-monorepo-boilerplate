@@ -1,12 +1,12 @@
-import { isArray, isObject } from 'class-validator';
-import { map, Observable } from 'rxjs';
+import { isArray, isObject } from "class-validator";
+import { map, Observable } from "rxjs";
 
 import {
   CallHandler,
   ExecutionContext,
   Injectable,
   NestInterceptor,
-} from '@nestjs/common';
+} from "@nestjs/common";
 
 @Injectable()
 export class TransformResponseInterceptor<T>
@@ -17,18 +17,18 @@ export class TransformResponseInterceptor<T>
     next: CallHandler,
   ): Observable<Partial<T>> {
     return next.handle().pipe(
-      map(data => {
+      map((data) => {
         if (isObject(data)) {
           return Object.fromEntries(
-            Object.entries(data).filter(([k]) => !k.startsWith('__')),
+            Object.entries(data).filter(([k]) => !k.startsWith("__")),
           ) as Partial<T>;
         }
         if (isArray(data)) {
-          return data.map(item =>
+          return data.map((item) =>
             isObject(item as unknown)
               ? Object.fromEntries(
                   Object.entries(item as object).filter(
-                    ([k]) => !k.startsWith('__'),
+                    ([k]) => !k.startsWith("__"),
                   ),
                 )
               : (item as unknown),

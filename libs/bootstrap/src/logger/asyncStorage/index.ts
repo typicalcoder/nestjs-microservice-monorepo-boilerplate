@@ -1,10 +1,10 @@
-import { AsyncLocalStorage } from 'async_hooks';
-import { randomUUID } from 'crypto';
-import { UUID } from 'node:crypto';
-import { Logger } from 'winston';
-import { getLogger } from '@bootstrap/logger';
+import { getLogger } from "@bootstrap/logger";
+import { AsyncLocalStorage } from "async_hooks";
+import { randomUUID } from "crypto";
+import { UUID } from "node:crypto";
+import { Logger } from "winston";
 
-import { RpcArgumentsHost } from '@nestjs/common/interfaces';
+import { RpcArgumentsHost } from "@nestjs/common/interfaces";
 
 export type AsyncStorage = {
   logger: Logger;

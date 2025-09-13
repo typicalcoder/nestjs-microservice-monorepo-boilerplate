@@ -4,16 +4,16 @@ import {
   ListUserCommandRequestPayload,
   ListUserCommandResponsePayload,
   UsersCommands,
-} from '@microservice/lib/commands/users';
+} from "@microservice/lib/commands/users";
 import {
   CreateUserCommandRequestPayload,
   CreateUserCommandResponsePayload,
-} from '@microservice/lib/commands/users/create.users.command-payload';
+} from "@microservice/lib/commands/users/create.users.command-payload";
 
-import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Controller } from "@nestjs/common";
+import { MessagePattern, Payload } from "@nestjs/microservices";
 
-import { RepositoryService } from './repository.service';
+import { RepositoryService } from "./repository.service";
 
 @Controller()
 export class RepositoryController {

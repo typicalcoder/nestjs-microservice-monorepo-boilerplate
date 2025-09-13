@@ -1,27 +1,13 @@
 {
   "semi": true,
-  "singleQuote": true,
+  "singleQuote": false,
+  "endOfLine": "lf",
+  "jsxSingleQuote": false,
   "trailingComma": "all",
-  "arrowParens": "avoid",
+  "arrowParens": "always",
   "printWidth": 80,
   "plugins": [
     "prettier-plugin-sort-json",
-    "@ianvs/prettier-plugin-sort-imports"
-  ],
-  "importOrder": [
-    "^@bootstrap/(.*)$",
-    "",
-    "^@microservice/(.*)$",
-    "",
-    "^@(.*)/(.*)$",
-    "",
-    "^[./]"
-  ],
-  "importOrderParserPlugins": [
-    "typescript",
-    "jsx",
-    "decorators-legacy"
-  ],
-  "importOrderTypeScriptVersion": "5.0.0",
-  "importOrderCaseSensitive": false
+    "prettier-plugin-organize-imports"
+  ]
 }

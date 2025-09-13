@@ -1,15 +1,15 @@
-import { MicroservicesEnum } from '@microservice';
-import { firstValueFrom } from 'rxjs';
+import { MicroservicesEnum } from "@microservice";
+import { firstValueFrom } from "rxjs";
 
 import {
   GetUserCommandRequestPayload,
   UsersCommands,
-} from '@microservice/lib/commands/users';
-import { CustomAmqpProxy } from '@microservice/lib/custom-amqp-proxy';
+} from "@microservice/lib/commands/users";
+import { CustomAmqpProxy } from "@microservice/lib/custom-amqp-proxy";
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from "@nestjs/common";
 
-import { UserProfileResponseDto } from './dto/user-profile.response.dto';
+import { UserProfileResponseDto } from "./dto/user-profile.response.dto";
 
 @Injectable()
 export class UserService {

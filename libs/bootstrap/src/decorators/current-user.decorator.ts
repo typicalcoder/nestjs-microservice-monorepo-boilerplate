@@ -2,9 +2,9 @@ import {
   JwtPayloadWithRt,
   LixRequest,
   RequestUserInfo,
-} from '@bootstrap/types';
+} from "@bootstrap/types";
 
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 
 export const CurrentUser = createParamDecorator(
   (

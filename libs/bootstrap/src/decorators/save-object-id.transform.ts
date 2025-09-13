@@ -1,12 +1,12 @@
-import { isArray } from 'class-validator';
+import { isArray } from "class-validator";
 
 export const SaveObjectId = (value: unknown): string | undefined => {
   if (
     value &&
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'obj' in value &&
-    'key' in value
+    "obj" in value &&
+    "key" in value
   ) {
     const obj = value.obj as Record<string, unknown>;
     const key = value.key as string;
@@ -23,10 +23,10 @@ export const SaveObjectId = (value: unknown): string | undefined => {
 export const SaveObjectIdArr = (value: unknown): string | undefined => {
   if (
     value &&
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'obj' in value &&
-    'key' in value
+    "obj" in value &&
+    "key" in value
   ) {
     const obj = value.obj as Record<string, unknown>;
     const key = value.key as string;

@@ -1,6 +1,6 @@
-import { LixRequest } from '@bootstrap/types';
+import { LixRequest } from "@bootstrap/types";
 
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 
 export const CurrentUserId = createParamDecorator(
   (_: undefined, context: ExecutionContext): string => {

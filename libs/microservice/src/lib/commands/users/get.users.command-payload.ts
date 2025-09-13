@@ -1,15 +1,15 @@
-import { Type } from 'class-transformer';
+import { UserEntity } from "@bootstrap/repository/entities/user.entity";
+import { Type } from "class-transformer";
 import {
   IsMongoId,
   IsOptional,
   IsPhoneNumber,
   ValidateNested,
-} from 'class-validator';
-import { UserEntity } from '@bootstrap/repository/entities/user.entity';
+} from "class-validator";
 
-import { BasePayload } from '@microservice/lib/commands/base.payload';
+import { BasePayload } from "@microservice/lib/commands/base.payload";
 
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class GetUserCommandRequestPayload extends BasePayload {
   @ApiPropertyOptional()
@@ -22,7 +22,7 @@ export class GetUserCommandRequestPayload extends BasePayload {
   @IsOptional()
   phone?: string;
 
-  __internal_type = 'GetUserCommandRequestPayload' as const;
+  __internal_type = "GetUserCommandRequestPayload" as const;
 
   constructor(dto: { id?: string; phone?: string }) {
     super();
@@ -37,7 +37,7 @@ export class GetUserCommandResponsePayload extends BasePayload {
   @ValidateNested()
   user!: UserEntity;
 
-  __internal_type = 'GetUserCommandResponsePayload' as const;
+  __internal_type = "GetUserCommandResponsePayload" as const;
 
   constructor(entity: UserEntity) {
     super();
