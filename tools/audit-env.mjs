@@ -27,10 +27,30 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 // ─── scope map: which .env.example owns which code directory(s) ───────────
 // Root .env.example is a union — not a per-scope authority, reported separately.
 const SCOPES = [
-  { name: 'gateway', code: ['apps/gateway'], env: 'apps/gateway/.env.example', config: 'apps/gateway/src/config/gateway.config.ts' },
-  { name: 'user',    code: ['apps/user'],    env: 'apps/user/.env.example',    config: 'apps/user/src/config/user.config.ts' },
-  { name: 'task:db-migrate', code: ['tasks/db-migrate'], env: 'tasks/db-migrate/.env.example', config: null },
-  { name: 'task:user-purge', code: ['tasks/user-purge'], env: 'tasks/user-purge/.env.example', config: null },
+  {
+    name: 'gateway',
+    code: ['apps/gateway'],
+    env: 'apps/gateway/.env.example',
+    config: 'apps/gateway/src/config/gateway.config.ts',
+  },
+  {
+    name: 'user',
+    code: ['apps/user'],
+    env: 'apps/user/.env.example',
+    config: 'apps/user/src/config/user.config.ts',
+  },
+  {
+    name: 'task:db-migrate',
+    code: ['tasks/db-migrate'],
+    env: 'tasks/db-migrate/.env.example',
+    config: null,
+  },
+  {
+    name: 'task:user-purge',
+    code: ['tasks/user-purge'],
+    env: 'tasks/user-purge/.env.example',
+    config: null,
+  },
 ];
 
 // Shared config classes in libs/common — inherited by service configs.
@@ -41,8 +61,12 @@ const SHARED_CONFIGS = {
 
 // Vars every service boots through initSentry / buildLogger (libs/common).
 const OBSERVABILITY_VARS = [
-  'NODE_ENV', 'LOG_LEVEL', 'LOG_FORMAT',
-  'SENTRY_DSN', 'SENTRY_TRACES_SAMPLE_RATE', 'RELEASE_TAG',
+  'NODE_ENV',
+  'LOG_LEVEL',
+  'LOG_FORMAT',
+  'SENTRY_DSN',
+  'SENTRY_TRACES_SAMPLE_RATE',
+  'RELEASE_TAG',
   // RMQ_QUEUE_PREFIX is now declared on ServiceConfig / GatewayConfig.
 ];
 
@@ -58,7 +82,7 @@ const BOOTSTRAP_ONLY = {
   // The typed config still declares them so validate-hook catches bad values,
   // but the code-read is invisible to the per-scope grep.
   gateway: ['RMQ_QUEUE_PREFIX'],
-  user:    ['RMQ_QUEUE_PREFIX'],
+  user: ['RMQ_QUEUE_PREFIX'],
 };
 
 /**
@@ -71,7 +95,7 @@ const SHARED_LIB_READS = {
   // getQueuePrefix() in libs/common/src/constants/queue.constants.ts reads
   // RMQ_QUEUE_PREFIX via process.env at module-load time. All services use it.
   gateway: ['RMQ_QUEUE_PREFIX'],
-  user:    ['RMQ_QUEUE_PREFIX'],
+  user: ['RMQ_QUEUE_PREFIX'],
 };
 
 /**
@@ -183,7 +207,10 @@ for (const scope of SCOPES) {
   const codeReads = collectReads(scope.code);
   const envDeclared = collectEnvExample(scope.env);
   const { fields: ownFields, extendsName } = collectConfigFields(scope.config);
-  const inherited = extendsName && SHARED_CONFIGS[extendsName] ? SHARED_CONFIGS[extendsName] : [];
+  const inherited =
+    extendsName && SHARED_CONFIGS[extendsName]
+      ? SHARED_CONFIGS[extendsName]
+      : [];
   const allConfigFields = new Set([...ownFields, ...inherited]);
 
   // For task-scopes without a dedicated config but backed by MongoTaskConfig:
@@ -202,31 +229,38 @@ for (const scope of SCOPES) {
 
   const readsMinusConfig = new Set(
     [...codeReads].filter(
-      k => !effectiveFields.has(k)
-        && !inheritedObservability.has(k)
-        && !bootstrapOnly.has(k),
+      (k) =>
+        !effectiveFields.has(k) &&
+        !inheritedObservability.has(k) &&
+        !bootstrapOnly.has(k),
     ),
   );
   const configMinusReads = new Set(
     [...effectiveFields].filter(
-      k => !codeReads.has(k) && !reservedStubs.has(k) && !sharedLibReads.has(k),
+      (k) =>
+        !codeReads.has(k) && !reservedStubs.has(k) && !sharedLibReads.has(k),
     ),
   );
   const readsMinusEnv = new Set(
-    [...codeReads].filter(k => !envDeclared.has(k) && !inheritedObservability.has(k)),
+    [...codeReads].filter(
+      (k) => !envDeclared.has(k) && !inheritedObservability.has(k),
+    ),
   );
   const envMinusReads = new Set(
     [...envDeclared].filter(
-      k => !codeReads.has(k)
-        && !inheritedObservability.has(k)
-        && !effectiveFields.has(k)
-        && !reservedStubs.has(k),
+      (k) =>
+        !codeReads.has(k) &&
+        !inheritedObservability.has(k) &&
+        !effectiveFields.has(k) &&
+        !reservedStubs.has(k),
     ),
   );
 
   findings.push({
     scope: scope.name,
-    configFile: scope.config ?? `(shared ${scope.name.startsWith('task:') ? 'MongoTaskConfig' : 'ServiceConfig'})`,
+    configFile:
+      scope.config ??
+      `(shared ${scope.name.startsWith('task:') ? 'MongoTaskConfig' : 'ServiceConfig'})`,
     envFile: scope.env,
     readsMinusConfig,
     configMinusReads,
@@ -248,10 +282,22 @@ for (const f of findings) {
   console.log(`\n── ${f.scope} ────────────────────────────────────────────`);
   console.log(`   config: ${f.configFile}`);
   console.log(`   env:    ${f.envFile}`);
-  if (hole) console.log(`   ⚠  VALIDATION HOLE (read in code, not on config class):\n        ${fmtSet(f.readsMinusConfig)}`);
-  if (dead) console.log(`   ☠  DECORATIVE FIELDS (on config class, never read):\n        ${fmtSet(f.configMinusReads)}`);
-  if (docGap) console.log(`   📄 DOC GAP (read in code, missing from .env.example):\n        ${fmtSet(f.readsMinusEnv)}`);
-  if (envDead) console.log(`   🗑  STALE ENV (in .env.example, not read, not on config):\n        ${fmtSet(f.envMinusReads)}`);
+  if (hole)
+    console.log(
+      `   ⚠  VALIDATION HOLE (read in code, not on config class):\n        ${fmtSet(f.readsMinusConfig)}`,
+    );
+  if (dead)
+    console.log(
+      `   ☠  DECORATIVE FIELDS (on config class, never read):\n        ${fmtSet(f.configMinusReads)}`,
+    );
+  if (docGap)
+    console.log(
+      `   📄 DOC GAP (read in code, missing from .env.example):\n        ${fmtSet(f.readsMinusEnv)}`,
+    );
+  if (envDead)
+    console.log(
+      `   🗑  STALE ENV (in .env.example, not read, not on config):\n        ${fmtSet(f.envMinusReads)}`,
+    );
 }
 if (!any) {
   console.log(

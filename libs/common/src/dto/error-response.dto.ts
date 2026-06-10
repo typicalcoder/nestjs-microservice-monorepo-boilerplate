@@ -23,20 +23,20 @@ export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 
 export class ErrorResponseDto {
   @ApiProperty({ example: 400 })
-  statusCode: number;
+  statusCode!: number;
 
   @ApiProperty({
     example: 'validation_error',
     enum: Object.values(ERROR_CODES),
   })
-  code: string;
+  code!: string;
 
   @ApiProperty({ example: 'Validation failed' })
-  message: string;
+  message!: string;
 
   @ApiPropertyOptional({ example: { field: 'email' } })
   details?: Record<string, unknown>;
 
   @ApiProperty({ example: 'req_01hxyz' })
-  requestId: string;
+  requestId!: string;
 }

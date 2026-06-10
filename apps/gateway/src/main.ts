@@ -27,13 +27,12 @@ assertRequiredEnv([
   'RABBITMQ_URL',
   'JWT_ACCESS_SECRET',
   'JWT_REFRESH_SECRET',
-  'JWT_DEVICE_SECRET',
   'REDIS_URL',
 ]);
 
-// VK OAuth audiences (VK_ANDROID_APP_ID / VK_IOS_APP_ID) are enforced by the
-// typed `GatewayConfig` schema — see `src/config/gateway.config.ts`. Full env
-// docs in `.env.example` under "OAuth verifiers".
+// VK OAuth audiences (VK_ANDROID_APP_ID / VK_IOS_APP_ID) are OPTIONAL — the
+// typed `GatewayConfig` schema validates their shape when set; unset means
+// the VK provider answers "not configured". Docs in `.env.example`.
 
 async function bootstrap() {
   // No `bufferLogs: true`: NestFactory.create implicitly runs `app.init()`,

@@ -24,7 +24,7 @@ export class JwtAccessStrategy extends PassportStrategy(
         message: 'Missing subject',
       });
     }
-    // Reject refresh/device tokens presented as access tokens. They're signed
+    // Reject refresh tokens presented as access tokens. They are signed
     // with different secrets so forging is already blocked, but a same-shape
     // token of the wrong type would otherwise pass this validate().
     if (

@@ -85,17 +85,25 @@ Or build & run everything in containers: `docker compose up --build`.
 
 ## Adding a microservice
 
-1. Scaffold `apps/<name>` mirroring `apps/user` (`main.ts` → `bootstrapService`,
-   an `app.module.ts`, a feature module with `@MessagePattern` handlers).
-2. Register it in `nest-cli.json`.
-3. Add its queue/token/exchange in `libs/common/src/constants/queue.constants.ts`
-   (`QUEUES`, `SERVICE_TOKENS`, `MSG`) and to `ALL_SERVICES` / `QUEUE_BY_TOKEN`
-   in `libs/messaging/src/messaging.module.ts`.
-4. Add a routing helper on `RpcClientService` mirroring `user()` and extend the
-   `ServiceName` union.
-5. Add a typed config (extend `ServiceConfig`) and an `apps/<name>/.env.example`.
+```bash
+pnpm scaffold billing      # any kebab-case name
+pnpm exec nest build billing
+```
+
+The generator (`tools/scaffold-service.mjs`) creates `apps/<name>` (bootstrap,
+app module, feature module with a PING handler, tsconfig, .env.example) and
+wires it everywhere: `nest-cli.json`, queue constants (`QUEUES` /
+`SERVICE_TOKENS`), `MessagingModule` (`ALL_SERVICES` / `QUEUE_BY_TOKEN`),
+`RpcClientService` (`rpc.<name>()` helper), `package.json` scripts,
+`docker-compose.yml`, and the deploy workflow. Edits are anchored — if a file
+has diverged from the template the script aborts before writing and tells you
+what to wire manually.
+
+Afterwards: add `MSG.*` patterns + `@MessagePattern` handlers, optionally a
+typed config class extending `ServiceConfig`, and a `pingService('<name>')`
+entry in the gateway health controller.
 
 ## Scripts
 
-`build` · `start:dev[:gateway|:user]` · `lint` · `lint:env` · `test`
-`test:cov` · `test:ci` · `e2e:smoke` · `format`
+`build` · `start:dev[:gateway|:user]` · `scaffold <name>` · `lint` · `lint:env`
+`test` · `test:cov` · `test:ci` · `e2e:smoke` · `format`

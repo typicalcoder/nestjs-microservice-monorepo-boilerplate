@@ -2,18 +2,14 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 
-# Устанавливаем необходимые инструменты
-RUN apk add --no-cache git jq bash curl
-
-# Копируем только package.json, pnpm-lock.yaml и .npmrc (для кэша)
+# Copy only the manifests so the dependency layer caches well.
 COPY package.json pnpm-lock.yaml .npmrc* ./
 
-# Установим pnpm (берём версию из package.json.engines.pnpm, иначе дефолт)
-RUN PNPM_VERSION=$(jq -r '.engines.pnpm // empty' package.json) && \
-    if [ -z "$PNPM_VERSION" ] || [ "$PNPM_VERSION" = "null" ]; then PNPM_VERSION=9.15.4; fi && \
-    corepack enable && corepack prepare pnpm@$PNPM_VERSION --activate
+# corepack ships with node and reads the pinned version from the
+# `packageManager` field — no jq / manual version extraction needed.
+RUN corepack enable
 
-# Устанавливаем все зависимости (dev+prod) для сборки, с кешем
+# Install ALL deps (dev+prod) for the build, with a shared store cache.
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
     pnpm install --frozen-lockfile
 
@@ -21,33 +17,28 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
 FROM node:22-alpine AS build
 WORKDIR /app
 
-RUN apk add --no-cache git jq bash curl
-
-# Копируем node_modules из deps
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Устанавливаем pnpm в этом stage, чтобы команда была доступна
-RUN PNPM_VERSION=$(jq -r '.engines.pnpm // empty' package.json) && \
-    if [ -z "$PNPM_VERSION" ] || [ "$PNPM_VERSION" = "null" ]; then PNPM_VERSION=9.15.4; fi && \
-    corepack enable && corepack prepare pnpm@$PNPM_VERSION --activate
+RUN corepack enable
 
-# Строим конкретный nest-project (apps/* или tasks/*). Копируем билд в
-# detectable location — рантайм-stage не знает, было это app или task.
+# Build one nest project (apps/* or tasks/*) and copy the artifact to a
+# detectable location — the runtime stage doesn't care whether it was an
+# app or a task. `node -p` replaces jq for reading nest-cli.json.
 ARG SERVICE
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
     pnpm build ${SERVICE} && \
-    ROOT=$(jq -r ".projects[\"${SERVICE}\"].root" nest-cli.json) && \
-    test -n "$ROOT" && test "$ROOT" != "null" || (echo "Unknown nest project: ${SERVICE}"; exit 1) && \
+    ROOT=$(node -p "require('./nest-cli.json').projects['${SERVICE}']?.root ?? ''") && \
+    test -n "$ROOT" || (echo "Unknown nest project: ${SERVICE}"; exit 1) && \
     mkdir -p /app/dist/_final && \
     cp -r /app/dist/${ROOT}/. /app/dist/_final/ && \
     echo "✅ Built ${SERVICE} (root=${ROOT}) into dist/_final" && \
     ls -la /app/dist/_final
 
-# Upload sourcemaps to self-hosted Sentry with debug IDs so stacktraces
-# resolve to original TS even though the .map files are stripped from
-# the runtime image. Skipped when SENTRY_AUTH_TOKEN secret is absent
-# (local builds without `--secret id=sentry_auth_token,...`).
+# Upload sourcemaps to Sentry with debug IDs so stacktraces resolve to
+# original TS even though the .map files are stripped from the runtime
+# image. Skipped when the SENTRY_AUTH_TOKEN secret is absent (local builds
+# without `--secret id=sentry_auth_token,...`).
 ARG RELEASE_TAG=dev
 ARG SENTRY_URL=https://sentry.lix.su
 ARG SENTRY_ORG=lix
@@ -71,16 +62,11 @@ RUN --mount=type=secret,id=sentry_auth_token \
 FROM node:22-alpine AS prod-deps
 WORKDIR /app
 
-RUN apk add --no-cache git jq bash curl
-
 COPY package.json pnpm-lock.yaml .npmrc* ./
 
-# Устанавливаем pnpm
-RUN PNPM_VERSION=$(jq -r '.engines.pnpm // empty' package.json) && \
-    if [ -z "$PNPM_VERSION" ] || [ "$PNPM_VERSION" = "null" ]; then PNPM_VERSION=9.15.4; fi && \
-    corepack enable && corepack prepare pnpm@$PNPM_VERSION --activate
+RUN corepack enable
 
-# Ставим только production зависимости
+# Production dependencies only.
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
     pnpm install --frozen-lockfile --prod
 
@@ -99,11 +85,10 @@ ARG SERVICE
 ARG RELEASE_TAG=dev
 ENV RELEASE_TAG=${RELEASE_TAG}
 
-# Билд-stage уже скопировал финальный артефакт в dist/_final — каноничный
-# путь одинаков и для apps/*, и для tasks/*.
+# The build stage already copied the final artifact into dist/_final —
+# one canonical path for both apps/* and tasks/*.
 COPY --from=build /app/dist/_final ./dist
 
-# Копируем только прод-зависимости
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY package.json .
 

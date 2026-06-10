@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import {
   AccountType,
   ERROR_CODES,
@@ -48,15 +48,23 @@ export class AuthService {
     private readonly oauthFactory: OAuthVerifierFactory,
   ) {}
 
-  async autoreg(dto: AutoregDto, deviceId: string): Promise<AuthResponseDto> {
+  async autoreg(
+    dto: AutoregDto,
+    deviceId: string,
+    clientIp?: string,
+  ): Promise<AuthResponseDto> {
     const result = await this.rpc.user<{
       id: string;
       tokenVersion: number;
     }>(MSG.CREATE_AUTOREG_USER, {
       fingerprint: dto.deviceFingerprint,
       platform: dto.platform,
+      // Anti-abuse breadcrumb on the Device row (user-service stores
+      // `lastIpHash`). Hashed at the edge so the raw IP never crosses the
+      // message bus or lands in another service's storage/logs.
+      ipHash: clientIp ? this.hashIp(clientIp) : undefined,
     });
-    // The public device binding for refresh/device JWTs is the client-owned
+    // The public device binding for refresh JWTs is the client-owned
     // X-Device-Id header (stable install UUID), not the internal Mongo _id
     // of the Device row created in user-service.
     const pair = this.issueTokenPair(
@@ -65,12 +73,10 @@ export class AuthService {
       deviceId,
       result.tokenVersion,
     );
-    const deviceToken = this.issueDeviceToken(result.id, deviceId);
     return {
       ...pair,
       userId: result.id,
       accountType: AccountType.autoreg,
-      deviceToken,
     };
   }
 
@@ -288,19 +294,12 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private issueDeviceToken(userId: string, deviceId: string): string {
-    return this.jwtService.sign(
-      { sub: userId, deviceId, type: 'device' },
-      {
-        secret: this.config.getOrThrow<string>('JWT_DEVICE_SECRET'),
-        expiresIn: (this.config.get<string>('JWT_DEVICE_EXPIRES_IN') ??
-          '365d') as `${number}${'s' | 'm' | 'h' | 'd'}`,
-      },
-    );
-  }
-
   /** Build a verifier hint object from the request-context the controller
    *  collected. Untrusted by design — only used for ordering. */
+  private hashIp(ip: string): string {
+    return createHash('sha256').update(ip).digest('hex');
+  }
+
   private hintsFromCtx(ctx: RequestContextHints): OAuthVerifyHints {
     const platform = parsePlatformFromUserAgent(ctx.userAgent);
     return platform ? { platform } : {};

@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { AccountType } from '../enums';
 
 export class TokenPairDto {
@@ -40,11 +40,4 @@ export class AuthResponseDto extends TokenPairDto {
     example: AccountType.user,
   })
   accountType!: AccountType;
-
-  @ApiPropertyOptional({
-    description:
-      'One-time recovery JWT tied to the device. Only returned on autoreg.',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjE...',
-  })
-  deviceToken?: string;
 }

@@ -51,17 +51,18 @@ export class VkOAuthVerifierService implements OAuthVerifier {
    * Whitelist of acceptable client_ids, indexed by platform. VK issues a
    * different App ID per platform (Android / iOS); we accept either, but
    * never an arbitrary client_id pulled from the id_token's `aud` (that
-   * would let an attacker route through their own VK app). Both are
-   * required by `GatewayConfig`.
+   * would let an attacker route through their own VK app). Optional in
+   * `GatewayConfig` — when neither is set, the id_token path responds
+   * with a clear "not configured" error instead of blocking gateway boot.
    */
-  private readonly androidId: string;
-  private readonly iosId: string;
+  private readonly androidId?: string;
+  private readonly iosId?: string;
   private readonly publicInfoUrl: string;
   private readonly userInfoUrl: string;
 
   constructor(config: ConfigService<GatewayConfig, true>) {
-    this.androidId = config.getOrThrow('VK_ANDROID_APP_ID');
-    this.iosId = config.getOrThrow('VK_IOS_APP_ID');
+    this.androidId = config.get('VK_ANDROID_APP_ID');
+    this.iosId = config.get('VK_IOS_APP_ID');
     this.publicInfoUrl =
       config.get('VK_PUBLIC_INFO_URL') ?? DEFAULT_VK_PUBLIC_INFO_URL;
     this.userInfoUrl = config.get('VK_USERINFO_URL') ?? DEFAULT_VK_USERINFO_URL;
@@ -84,12 +85,13 @@ export class VkOAuthVerifierService implements OAuthVerifier {
 
   /** Order whitelist client_ids so the platform hinted by the request
    *  (User-Agent) is tried first. Falls back to a stable default order
-   *  when no hint is available. */
+   *  when no hint is available. Unset IDs are skipped. */
   private orderedClientIds(hints: OAuthVerifyHints): readonly string[] {
-    if (hints.platform === 'ios') return [this.iosId, this.androidId];
-    // Android-first by default — historical clients were Android-only,
-    // and the order is irrelevant when both succeed.
-    return [this.androidId, this.iosId];
+    const ordered =
+      hints.platform === 'ios'
+        ? [this.iosId, this.androidId]
+        : [this.androidId, this.iosId];
+    return ordered.filter((v): v is string => !!v);
   }
 
   /**
@@ -132,8 +134,19 @@ export class VkOAuthVerifierService implements OAuthVerifier {
     idToken: string,
     hints: OAuthVerifyHints,
   ): Promise<OAuthIdentity> {
+    const clientIds = this.orderedClientIds(hints);
+    if (clientIds.length === 0) {
+      // Boilerplate default: VK App IDs are optional env vars. Surface a
+      // self-explanatory error instead of a generic 401 so the operator
+      // knows it's a config gap, not a bad user token.
+      throw new UnauthorizedException({
+        code: ERROR_CODES.TOKEN_INVALID,
+        message:
+          'VK OAuth is not configured on this server — set VK_ANDROID_APP_ID / VK_IOS_APP_ID',
+      });
+    }
     let lastError: string | undefined;
-    for (const clientId of this.orderedClientIds(hints)) {
+    for (const clientId of clientIds) {
       const result = await this.tryPublicInfo(clientId, idToken);
       if (result.kind === 'ok') return result.identity;
       if (result.kind === 'upstream') {

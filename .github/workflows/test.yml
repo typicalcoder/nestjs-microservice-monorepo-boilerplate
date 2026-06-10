@@ -1,4 +1,4 @@
-name: Test
+name: CI
 
 on:
   push:
@@ -11,9 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Reads the pinned version from package.json `packageManager`.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10.28.0
 
       - uses: actions/setup-node@v4
         with:
@@ -22,6 +21,17 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm exec eslint "{apps,libs,tasks}/**/*.ts"
+
+      - name: Build every project
+        run: |
+          for p in $(node -p "Object.keys(require('./nest-cli.json').projects).filter(k => require('./nest-cli.json').projects[k].type === 'application').join(' ')"); do
+            echo "::group::nest build $p"
+            pnpm exec nest build "$p"
+            echo "::endgroup::"
+          done
 
       - name: Run tests with coverage
         run: pnpm run test:ci

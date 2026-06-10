@@ -23,10 +23,3 @@ export interface JwtRefreshPayload extends JwtPayload {
   // refresh handler treats `undefined` as `0` (initial value).
   tv?: number;
 }
-
-export interface JwtDevicePayload {
-  sub: string; // userId
-  deviceId: string;
-  type: 'device';
-  iat?: number;
-}

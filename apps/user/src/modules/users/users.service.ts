@@ -13,6 +13,7 @@ import {
 } from '@app/common';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
+import { stageOutboxEvent } from '@app/messaging';
 import { EmailService } from '../email/email.service';
 
 interface AutoregPayload {
@@ -446,6 +447,17 @@ export class UsersService {
     user.resetPasswordExpiry = undefined;
     // Bump tokenVersion so every refresh token already in flight is invalidated.
     user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+    // Outbox example (at-least-once fan-out): stage the `user.deleted` event
+    // in the same flush as the soft-delete, so a pod crash between the write
+    // and the publish can't lose it. The OutboxDispatcher (libs/messaging)
+    // sweeps pending rows and publishes to the topic exchange; subscribers
+    // dedupe by idempotencyKey and validate with `parseUserDeleted`.
+    await stageOutboxEvent(this.em, {
+      target: 'user',
+      pattern: 'user.deleted',
+      payload: { userId: user.id },
+      idempotencyKey: `user.deleted:${user.id}`,
+    });
     await this.em.flush();
   }
 

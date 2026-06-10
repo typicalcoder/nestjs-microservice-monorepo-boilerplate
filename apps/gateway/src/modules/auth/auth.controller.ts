@@ -4,6 +4,7 @@ import {
   Controller,
   Headers,
   HttpCode,
+  Ip,
   Param,
   Post,
   UnauthorizedException,
@@ -75,7 +76,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Create autoreg account by device fingerprint',
     description:
-      'Когда вызывать: холодный старт без введённых учёток (storage пуст, юзер ничего не нажимал). См. `docs/AUTH-FLOW.md`.\n\nCreates or returns an anonymous account tied to the device. Same fingerprint always returns the same account. Rate-limited: 3/min per fingerprint, 5/min per IP.',
+      'Call on cold start with no stored credentials. See `docs/AUTH-FLOW.md`.\n\nCreates or returns an anonymous account tied to the device. Same fingerprint always returns the same account. Rate-limited: 3/min per fingerprint, 5/min per IP.',
   })
   @ApiBody({ type: AutoregDto })
   @ApiHeader({ name: DEVICE_ID_HEADER, required: true })
@@ -83,8 +84,11 @@ export class AuthController {
   autoreg(
     @Body() dto: AutoregDto,
     @Headers(DEVICE_ID_HEADER) deviceId?: string,
+    // `req.ip` resolves to the real client thanks to `trust proxy` in
+    // main.ts. AuthService hashes it before it crosses the message bus.
+    @Ip() clientIp?: string,
   ) {
-    return this.authService.autoreg(dto, requireDeviceId(deviceId));
+    return this.authService.autoreg(dto, requireDeviceId(deviceId), clientIp);
   }
 
   @Post('upgrade')
@@ -119,7 +123,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Login with email + password',
     description:
-      'Когда вызывать: восстановление аккаунта на новом устройстве — storage пуст, юзер ввёл email+пароль через экран «у меня уже есть аккаунт». Если есть anon (autoreg) — `/upgrade`, не `/login`. См. `docs/AUTH-FLOW.md`.\n\nAuthenticates a registered account and returns a short-lived access token and a long-lived refresh token.',
+      'Call when recovering an account on a new device: storage is empty and the user entered email+password. If an anon (autoreg) session exists — use `/upgrade`, not `/login`. See `docs/AUTH-FLOW.md`.\n\nAuthenticates a registered account and returns a short-lived access token and a long-lived refresh token.',
   })
   @ApiBody({ type: LoginDto })
   @ApiHeader({ name: DEVICE_ID_HEADER, required: true })
@@ -136,7 +140,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Refresh access token using refresh token',
     description:
-      'Когда вызывать: access протух (`401 token_expired`) или истекает; в storage есть refresh. Если `/refresh` сам вернул `401` (`token_invalid` / `device_mismatch`) — стереть оба токена и в холодный старт. См. `docs/AUTH-FLOW.md`.\n\nRotates the token pair. The used refresh token is immediately invalidated. Send the refresh token in the Bearer header.',
+      'Call when the access token expired (`401 token_expired`) or is about to, and a refresh token is stored. If `/refresh` itself returns `401` (`token_invalid` / `device_mismatch`) — wipe both tokens and cold-start. See `docs/AUTH-FLOW.md`.\n\nRotates the token pair. The used refresh token is immediately invalidated. Send the refresh token in the Bearer header.',
   })
   @ApiHeader({ name: DEVICE_ID_HEADER, required: true })
   @ApiOkResponse({ type: TokenPairDto })
@@ -177,7 +181,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Logout — invalidate refresh token',
     description:
-      'Когда вызывать: юзер нажал «выйти». Передавать access в Bearer, refresh — в теле запроса. См. `docs/AUTH-FLOW.md`.\n\nBlacklists the refresh token until its natural expiry. The access token stays valid until it expires on its own.',
+      'Call when the user taps "log out". Send the access token in Bearer and the refresh token in the body. See `docs/AUTH-FLOW.md`.\n\nBlacklists the refresh token until its natural expiry. The access token stays valid until it expires on its own.',
   })
   @ApiBody({ type: LogoutDto })
   @ApiOkResponse({ type: SuccessDto })
@@ -192,7 +196,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Request password reset email',
     description:
-      'Когда вызывать: юзер на экране логина нажал «забыл пароль». Дальше — `/auth/reset` после клика по ссылке из письма.\n\nSends a reset link to the email if it belongs to a registered account. Always returns 200 to prevent user enumeration.',
+      'Call when the user taps "forgot password" on the login screen. Follow up with `/auth/reset` after the email link is clicked.\n\nSends a reset link to the email if it belongs to a registered account. Always returns 200 to prevent user enumeration.',
   })
   @ApiBody({ type: ForgotPasswordDto })
   @ApiOkResponse({ type: SuccessDto })
@@ -207,7 +211,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Reset password using token from email',
     description:
-      'Когда вызывать: юзер перешёл по ссылке из письма (после `/auth/forgot`) и ввёл новый пароль. Токен из URL — одноразовый, TTL 1 час.\n\nValidates the single-use reset token and updates the password. Token expires in 1 hour.',
+      'Call when the user followed the email link (after `/auth/forgot`) and entered a new password. The URL token is single-use, TTL 1 hour.\n\nValidates the single-use reset token and updates the password. Token expires in 1 hour.',
   })
   @ApiBody({ type: ResetPasswordDto })
   @ApiOkResponse({ type: SuccessDto })
@@ -222,7 +226,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'OAuth recovery — login (or first-time create) via provider',
     description:
-      'Когда вызывать: восстановление на новом устройстве — storage пуст, юзер нажал OAuth-кнопку из экрана «у меня уже есть аккаунт». Если есть anon (autoreg) — `/upgrade` с `{ method:<provider>, oauthToken }`, не эта ручка. См. `docs/AUTH-FLOW.md`.\n\nFinds or creates an account for the OAuth identity. New users get a fresh account; returning users get their existing one. Provider is google/apple/vk/yandex.',
+      'Call when recovering on a new device: storage is empty and the user tapped an OAuth button. If an anon (autoreg) session exists — use `/upgrade` with `{ method:<provider>, oauthToken }`, not this endpoint. See `docs/AUTH-FLOW.md`.\n\nFinds or creates an account for the OAuth identity. New users get a fresh account; returning users get their existing one. Provider is google/apple/vk/yandex.',
   })
   @ApiParam({
     name: 'provider',

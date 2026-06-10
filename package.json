@@ -5,6 +5,7 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\" \"tasks/**/*.ts\"",
@@ -19,7 +20,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:ci": "jest --coverage --ci --runInBand"
+    "test:ci": "jest --coverage --ci --runInBand",
+    "scaffold": "node tools/scaffold-service.mjs"
   },
   "dependencies": {
     "@mikro-orm/core": "^7.1.4",

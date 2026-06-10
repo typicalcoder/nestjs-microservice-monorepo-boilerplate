@@ -9,6 +9,16 @@ import {
 import { Transform } from 'class-transformer';
 
 /**
+ * `.env` templates ship optional vars as `NAME=` (empty). dotenv delivers
+ * that as an empty STRING, which `@IsOptional()` does not treat as absent —
+ * shape validators like `@Matches` would then reject the "unset" value.
+ * Normalize '' → undefined so optional means optional.
+ */
+const emptyToUndefined = Transform(({ value }: { value: unknown }) =>
+  value === '' ? undefined : value,
+);
+
+/**
  * Typed env schema for the gateway. Instantiated and class-validated inside
  * `ConfigModule.forRoot({ validate })` so misconfiguration surfaces at
  * boot time with a single aggregated error, and hot paths can inject a
@@ -46,31 +56,31 @@ export class GatewayConfig {
   JWT_REFRESH_SECRET!: string;
 
   @IsString()
-  JWT_DEVICE_SECRET!: string;
-
-  @IsString()
   JWT_ACCESS_EXPIRES_IN: string = '15m';
 
   @IsString()
   JWT_REFRESH_EXPIRES_IN: string = '30d';
 
-  @IsString()
-  JWT_DEVICE_EXPIRES_IN: string = '365d';
-
-  // ── VK OAuth ────────────────────────────────────────────────
+  // ── VK OAuth (optional — set only if you use the VK provider) ──────────
   // VK ID issues a DIFFERENT App ID per mobile platform (Android / iOS),
   // and the verifier accepts BOTH as valid `aud` on incoming idTokens —
   // Android clients mint tokens with `aud=VK_ANDROID_APP_ID`, iOS clients
-  // with `aud=VK_IOS_APP_ID`. Both MUST be set in prod or cross-platform
-  // logins break silently. Numeric strings, public identifiers, single
-  // values across all stages (VK Developers Console → Приложения).
+  // with `aud=VK_IOS_APP_ID`. If you ship VK login, set both in prod or
+  // cross-platform logins break silently. When neither is set, the gateway
+  // still boots and `/v1/auth/oauth/vk` id_token verification responds with
+  // a clear "provider not configured" error. Numeric strings, public
+  // identifiers (VK Developers Console → Приложения).
+  @emptyToUndefined
+  @IsOptional()
   @IsString()
   @Matches(/^\d+$/, { message: 'VK_ANDROID_APP_ID must be numeric' })
-  VK_ANDROID_APP_ID!: string;
+  VK_ANDROID_APP_ID?: string;
 
+  @emptyToUndefined
+  @IsOptional()
   @IsString()
   @Matches(/^\d+$/, { message: 'VK_IOS_APP_ID must be numeric' })
-  VK_IOS_APP_ID!: string;
+  VK_IOS_APP_ID?: string;
 
   // Optional URL overrides — defaults baked into the verifier services.
   // Override only to point at a VK staging environment or a pinned mirror.
@@ -98,8 +108,10 @@ export class GatewayConfig {
   @IsString()
   VK_IOS_SERVICE_TOKEN?: string;
 
-  /** Convenience for verifiers — returns both platform VK audiences. */
-  get vkAudiences(): [string, string] {
-    return [this.VK_ANDROID_APP_ID, this.VK_IOS_APP_ID];
+  /** Convenience for verifiers — the configured platform VK audiences. */
+  get vkAudiences(): string[] {
+    return [this.VK_ANDROID_APP_ID, this.VK_IOS_APP_ID].filter(
+      (v): v is string => !!v,
+    );
   }
 }
