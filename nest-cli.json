@@ -1,104 +1,77 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/core/src",
+  "monorepo": true,
+  "root": "apps/gateway",
+  "sourceRoot": "apps/gateway/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/core/tsconfig.app.json"
+    "webpackConfigPath": "webpack.config.js",
+    "tsConfigPath": "apps/gateway/tsconfig.app.json"
   },
-  "monorepo": true,
-  "root": "apps/gateway",
   "projects": {
-    "auth": {
-      "type": "application",
-      "root": "apps/auth",
-      "entryFile": "main",
-      "sourceRoot": "apps/auth/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/auth/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "**/*.i18n",
-            "outDir": "dist/apps/auth",
-            "watchAssets": true
-          }
-        ]
-      }
-    },
-    "bootstrap": {
-      "type": "library",
-      "root": "libs/bootstrap",
-      "entryFile": "index",
-      "sourceRoot": "libs/bootstrap/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/bootstrap/tsconfig.lib.json"
-      }
-    },
-    "core": {
-      "type": "application",
-      "root": "apps/core",
-      "entryFile": "main",
-      "sourceRoot": "apps/core/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/core/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "**/*.i18n",
-            "outDir": "dist/apps/core",
-            "watchAssets": true
-          }
-        ]
-      }
-    },
     "gateway": {
       "type": "application",
       "root": "apps/gateway",
       "entryFile": "main",
       "sourceRoot": "apps/gateway/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/gateway/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "**/*.i18n",
-            "outDir": "dist/apps/gateway",
-            "watchAssets": true
-          }
-        ]
+        "tsConfigPath": "apps/gateway/tsconfig.app.json"
       }
     },
-    "microservice": {
+    "user": {
+      "type": "application",
+      "root": "apps/user",
+      "entryFile": "main",
+      "sourceRoot": "apps/user/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user/tsconfig.app.json"
+      }
+    },
+    "task-user-purge": {
+      "type": "application",
+      "root": "tasks/user-purge",
+      "entryFile": "main",
+      "sourceRoot": "tasks/user-purge/src",
+      "compilerOptions": {
+        "tsConfigPath": "tasks/user-purge/tsconfig.app.json"
+      }
+    },
+    "task-db-migrate": {
+      "type": "application",
+      "root": "tasks/db-migrate",
+      "entryFile": "main",
+      "sourceRoot": "tasks/db-migrate/src",
+      "compilerOptions": {
+        "tsConfigPath": "tasks/db-migrate/tsconfig.app.json"
+      }
+    },
+    "common": {
       "type": "library",
-      "root": "libs/microservice",
+      "root": "libs/common",
       "entryFile": "index",
-      "sourceRoot": "libs/microservice/src",
+      "sourceRoot": "libs/common/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/microservice/tsconfig.lib.json"
+        "tsConfigPath": "libs/common/tsconfig.lib.json"
       }
     },
-    "sms": {
-      "type": "application",
-      "root": "apps/sms",
-      "entryFile": "main",
-      "sourceRoot": "apps/sms/src",
+    "database": {
+      "type": "library",
+      "root": "libs/database",
+      "entryFile": "index",
+      "sourceRoot": "libs/database/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/sms/tsconfig.app.json"
+        "tsConfigPath": "libs/database/tsconfig.lib.json"
       }
     },
-    "users": {
-      "type": "application",
-      "root": "apps/users",
-      "entryFile": "main",
-      "sourceRoot": "apps/users/src",
+    "messaging": {
+      "type": "library",
+      "root": "libs/messaging",
+      "entryFile": "index",
+      "sourceRoot": "libs/messaging/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/users/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "**/*.i18n",
-            "outDir": "dist/apps/users",
-            "watchAssets": true
-          }
-        ]
+        "tsConfigPath": "libs/messaging/tsconfig.lib.json"
       }
     }
   }

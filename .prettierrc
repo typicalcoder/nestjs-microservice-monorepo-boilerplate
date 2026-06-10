@@ -1,13 +1,4 @@
 {
-  "semi": true,
-  "singleQuote": false,
-  "endOfLine": "lf",
-  "jsxSingleQuote": false,
-  "trailingComma": "all",
-  "arrowParens": "always",
-  "printWidth": 80,
-  "plugins": [
-    "prettier-plugin-sort-json",
-    "prettier-plugin-organize-imports"
-  ]
+  "singleQuote": true,
+  "trailingComma": "all"
 }

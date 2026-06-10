@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "outDir": "../../dist/tasks/db-migrate"
+  },
+  "include": ["src/**/*", "../../tools/migrations/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+}

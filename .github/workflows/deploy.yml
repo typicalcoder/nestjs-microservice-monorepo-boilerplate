@@ -6,16 +6,16 @@ on:
   workflow_dispatch:
     inputs:
       service:
-        description: 'Service'
+        description: 'Service or task (kebab-case, matches nest-cli.json project name)'
         required: true
         default: 'all'
         type: choice
         options:
-          - gateway
-          - core
-          - auth
-          - users
           - all
+          - gateway
+          - user
+          - task-user-purge
+          - task-db-migrate
 
       stage:
         description: 'Stage'
@@ -29,9 +29,13 @@ on:
 
 env:
   IMAGE_TAG: ${{ github.sha }}
-  DEPLOY_REPO: 'example/repo' # replace argocd repo
-  PROJECT: 'project' # replace project name
-  ALL_SERVICES: gateway,core,auth,users
+  DEPLOY_REPO: 'lix-su/argo'
+  PROJECT: 'app-be'
+  # Long-running services that accept traffic / consume RPC.
+  ALL_SERVICES: gateway,user
+  # K8s CronJob / Job entry points — same Dockerfile, different entry module.
+  # Every entry here must exist as a project in nest-cli.json.
+  ALL_TASKS: task-user-purge,task-db-migrate
   ALL_STAGES: dev,prod
 
 jobs:
@@ -43,38 +47,43 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          # читаем env переменные
           IFS=',' read -r -a SERVICES <<< "${ALL_SERVICES}"
+          IFS=',' read -r -a TASKS <<< "${ALL_TASKS}"
           IFS=',' read -r -a STAGES <<< "${ALL_STAGES}"
 
-          # фильтруем по входным параметрам workflow_dispatch
+          # Artifact = services + tasks. Dockerfile treats them identically.
+          ARTIFACTS=("${SERVICES[@]}" "${TASKS[@]}")
+
+          # Filter by workflow input. `all` keeps the full artifact list; a
+          # specific name narrows to just that artifact.
           if [[ "${{ github.event.inputs.service }}" != "all" ]]; then
-            SERVICES=("${{ github.event.inputs.service }}")
+            ARTIFACTS=("${{ github.event.inputs.service }}")
           fi
           if [[ "${{ github.event.inputs.stage }}" != "all" ]]; then
             STAGES=("${{ github.event.inputs.stage }}")
           fi
 
-          # матрица service × stage (для деплоя)
+          # deploy matrix: artifact × stage
           FULL_MATRIX=$(jq -n \
-            --argjson services "$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -s .)" \
+            --argjson artifacts "$(printf '%s\n' "${ARTIFACTS[@]}" | jq -R . | jq -s .)" \
             --argjson stages "$(printf '%s\n' "${STAGES[@]}" | jq -R . | jq -s .)" \
-            '{include: [$services[] as $s | $stages[] as $st | {service: $s, stage: $st}] }')
+            '{include: [$artifacts[] as $s | $stages[] as $st | {service: $s, stage: $st}] }')
 
-          # матрица только по сервисам (для билда)
-          SERVICES_MATRIX=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -s '{service: .}')
+          # build matrix: one row per artifact (same image for all stages)
+          SERVICES_MATRIX=$(printf '%s\n' "${ARTIFACTS[@]}" | jq -R . | jq -s '{service: .}')
 
-          echo "full-matrix<<EOF" >> $GITHUB_OUTPUT
-          echo "$FULL_MATRIX" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          echo "services-matrix<<EOF" >> $GITHUB_OUTPUT
-          echo "$SERVICES_MATRIX" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "full-matrix<<EOF"
+            echo "$FULL_MATRIX"
+            echo "EOF"
+            echo "services-matrix<<EOF"
+            echo "$SERVICES_MATRIX"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
           echo "Generated full matrix:"
           echo "$FULL_MATRIX"
-          echo "Generated services matrix:"
+          echo "Generated build matrix:"
           echo "$SERVICES_MATRIX"
 
   build-and-push:
@@ -102,6 +111,9 @@ jobs:
           push: true
           build-args: |
             SERVICE=${{ matrix.service }}
+            RELEASE_TAG=${{ github.sha }}
+          secrets: |
+            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |

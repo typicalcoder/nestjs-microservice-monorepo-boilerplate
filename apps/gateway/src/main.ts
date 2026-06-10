@@ -1,154 +1,224 @@
-import { HttpModuleGlobal } from "@bootstrap";
-import { ConfigModuleFactory } from "@bootstrap/base-config";
-import { LixException } from "@bootstrap/errors";
-import { AllExceptionsFilter } from "@bootstrap/errors/all-exceptions.filter";
-import { AtGuard } from "@bootstrap/guards";
-import { AtModule, RtModule } from "@bootstrap/guards/at/strategies";
-import { EventInterceptor } from "@bootstrap/interceptors/event.interceptor";
-import { TransformResponseInterceptor } from "@bootstrap/interceptors/transform-response.interceptor";
-import { getLogger, MyLogger } from "@bootstrap/logger";
-import { MicroservicesEnum } from "@microservice";
-import { useContainer } from "class-validator";
-import compression from "compression";
-import { selectConfig } from "nest-typed-config";
-import process from "process";
-
-import { buildClientProvider } from "@microservice/lib/build-client-provider";
-import { RmqDeserializer } from "@microservice/lib/rmq-deserializer";
-import { RmqSerializer } from "@microservice/lib/rmq-serializer";
-
+import { NestFactory, Reflector } from '@nestjs/core';
 import {
-  DynamicModule,
-  HttpStatus,
-  MiddlewareConsumer,
-  Module,
-  NestModule,
+  ClassSerializerInterceptor,
+  Logger,
   ValidationPipe,
-} from "@nestjs/common";
+} from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { OpenAPIObject } from '@nestjs/swagger';
+import { DocumentBuilder, getSchemaPath, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import {
-  APP_FILTER,
-  APP_GUARD,
-  APP_INTERCEPTOR,
-  NestFactory,
-} from "@nestjs/core";
-import { MicroserviceOptions, Transport } from "@nestjs/microservices";
+  assertRequiredEnv,
+  buildLogger,
+  ErrorResponseDto,
+  initSentry,
+  installProcessErrorHandlers,
+  optionalEnv,
+} from '@app/common';
+import { AppModule } from './app.module';
 
-import { FallbackController } from "./common/fallback.controller";
-import { HandleUserInterceptor } from "./common/interceptors/handle-user.interceptor";
-import { AsyncStorageMiddleware } from "./common/middlewares/async-storage.middleware";
-import { RequestLoggingMiddleware } from "./common/middlewares/request-logging.middleware";
-import { setupSwagger } from "./common/swagger/setup-swagger";
-import { Config } from "./config";
-import { GatewayModule } from "./gateway.module";
+initSentry('gateway');
 
-async function bootstrap(): Promise<void> {
-  process.on("unhandledRejection", (reason: unknown) => {
-    reason =
-      reason instanceof Error
-        ? { name: reason?.name, message: reason?.message, stack: reason?.stack }
-        : reason;
-    getLogger().error(
-      JSON.stringify({
-        message: "Unhandled rejection",
-        reason,
-      }),
-    );
+// Fail-fast at the earliest point: before NestFactory touches modules. Any
+// missing var prints a single aggregated error so a misconfigured pod is
+// diagnosed in seconds from `kubectl logs`.
+assertRequiredEnv([
+  'RABBITMQ_URL',
+  'JWT_ACCESS_SECRET',
+  'JWT_REFRESH_SECRET',
+  'JWT_DEVICE_SECRET',
+  'REDIS_URL',
+]);
+
+// VK OAuth audiences (VK_ANDROID_APP_ID / VK_IOS_APP_ID) are enforced by the
+// typed `GatewayConfig` schema — see `src/config/gateway.config.ts`. Full env
+// docs in `.env.example` under "OAuth verifiers".
+
+async function bootstrap() {
+  // No `bufferLogs: true`: NestFactory.create implicitly runs `app.init()`,
+  // which fires `OnApplicationBootstrap` hooks. If any of those hooks await
+  // an external dependency (e.g. RMQ connect in EventBusService) and the
+  // dependency is down, init never completes and the buffer never flushes —
+  // pod stays "Ready" with empty stdout while the boot is wedged. Passing
+  // `logger:` directly is enough to route Nest's own startup lines through
+  // winston; the few lines emitted before the logger is applied are an
+  // acceptable trade-off for boot-time observability of failed dependencies.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+    logger: buildLogger('gateway'),
   });
 
-  const configModule = ConfigModuleFactory(Config);
+  // explicit body size limit. Default Express
+  // limit is ~100 KB; we have no upload endpoints and the largest
+  // legitimate JSON payload is small. 64 KB leaves ample headroom while shutting
+  // the door on memory-pressure DoS via giant JSON.
+  app.useBodyParser('json', { limit: '64kb' });
+  app.useBodyParser('urlencoded', { limit: '64kb', extended: true });
 
-  const config = selectConfig(configModule, Config);
-  @Module({
-    imports: [
-      configModule,
-      HttpModuleGlobal,
-      GatewayModule,
-      AtModule.register({ AT_SECRET: config.AT_SECRET }),
-      RtModule.register({ RT_SECRET: config.RT_SECRET }),
-    ],
-    controllers: [FallbackController],
-    providers: [
-      buildClientProvider(MicroservicesEnum.USERS, Config),
-      { provide: APP_INTERCEPTOR, useClass: HandleUserInterceptor },
-      {
-        provide: AtGuard,
-        useClass: AtGuard,
-      },
-      {
-        provide: APP_GUARD,
-        useClass: AtGuard,
-      },
-      {
-        provide: APP_FILTER,
-        useValue: new AllExceptionsFilter(config.serviceName),
-      },
-      { provide: APP_INTERCEPTOR, useClass: EventInterceptor },
-      { provide: APP_INTERCEPTOR, useClass: TransformResponseInterceptor },
-    ],
-  })
-  class BootstrapModule implements NestModule {
-    static registerAsync(): DynamicModule {
-      return {
-        module: BootstrapModule,
-        imports: [GatewayModule, configModule],
-      };
-    }
-
-    configure(consumer: MiddlewareConsumer): void {
-      consumer.apply(AsyncStorageMiddleware).forRoutes("{*path}");
-      consumer.apply(RequestLoggingMiddleware).forRoutes("{*path}");
-    }
+  // Disable Express's auto weak-ETag generator so endpoints that compute
+  // their own strong ETag don't get their headers overwritten with a
+  // body-hash weak validator. We're explicit per-route about what's cacheable.
+  const httpInstance = app.getHttpAdapter().getInstance() as {
+    disable?: (setting: string) => void;
+    set?: (setting: string, value: unknown) => void;
+  };
+  if (typeof httpInstance.disable === 'function') {
+    httpInstance.disable('etag');
+  }
+  // Trust the cluster ingress so req.ip resolves to the real client (the
+  // leftmost address in X-Forwarded-For), not the ingress pod's overlay IP.
+  // Without this every request from every user shared one tracker key and
+  // the 100/min throttler treated the whole edge as a single client —
+  // exactly the regression that killed the gateway with 429 on liveness
+  // probes (2026-05-25). "1" = trust one hop (the ingress); we explicitly
+  // do NOT want `true` (trust any X-Forwarded-For), which would let a
+  // malicious client forge an arbitrary tracker key per request.
+  if (typeof httpInstance.set === 'function') {
+    httpInstance.set('trust proxy', 1);
   }
 
-  const app = await NestFactory.create(BootstrapModule, {
-    logger: new MyLogger(),
-    rawBody: true,
-    bodyParser: true,
-    cors: true,
-  });
-
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.RMQ,
-    options: {
-      urls: [config.RABBIT_MQ],
-      queue: config.getQueueName(),
-      serializer: new RmqSerializer(),
-      deserializer: new RmqDeserializer(),
-      consumerTag: config.POD_NAME,
-      prefetchCount: 10,
-      noAck: true,
-      queueOptions: {
-        durable: false,
-      },
-    },
-  });
-
-  await app.startAllMicroservices();
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      exceptionFactory: (errors): LixException =>
-        new LixException(
-          "ValidationError",
-          HttpStatus.NOT_ACCEPTABLE,
-          errors.flatMap((err) => Object.values(err.constraints)).join(", "),
-          errors,
-        ),
+  app.use(
+    helmet({
+      contentSecurityPolicy:
+        process.env['NODE_ENV'] === 'production' ? undefined : false,
     }),
   );
-  useContainer(app.select(GatewayModule), { fallbackOnErrors: true });
-  app.enableVersioning();
-  app.enableShutdownHooks();
-  app.use(compression());
-  setupSwagger(app, config, { name: "BuddJet", version: "1.0" });
 
+  // Global validation pipe — strips unknown fields, transforms types
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
+
+  // Class-transformer serialization
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
+  // CORS — if your only clients are native mobile apps they send no Origin
+  // header, so CORS is a browser-only concern that
+  // doesn't apply to our threat model. Wildcard hardcoded; if we ever
+  // expose a web admin or browser SDK, narrow this here. Never enable
+  // credentials with wildcard (browsers reject the combination per spec).
   app.enableCors({
-    origin: "*",
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Client-Version',
+      'X-Platform',
+      'X-Device-Id',
+      'X-Idempotency-Key',
+      'X-Trace-Id',
+      'Accept-Language',
+    ],
+    credentials: false,
   });
 
-  await app.listen(config.PORT ?? 3000);
+  // Swagger — available on /api/docs
+  if (process.env['NODE_ENV'] !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('App API')
+      .setDescription('Backend API gateway')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .addTag(
+        'auth',
+        // Tag description renders at the top of the auth section in Swagger UI.
+        [
+          'Authentication & identity.',
+          '',
+          'Which endpoint to call when:',
+          '  • have a refreshToken → `/auth/refresh`',
+          '  • cold start, no input → `/auth/autoreg`',
+          '  • anonymous user enters email/OAuth → `/auth/upgrade`',
+          '  • recover on a new device by email → `/auth/login`',
+          '  • recover on a new device via OAuth → `/auth/oauth/:provider`',
+          '',
+          'Every endpoint that issues a refresh token requires the `X-Device-Id` header.',
+        ].join('\n'),
+      )
+      .addTag('users', 'User profile')
+      .addTag('health', 'Service health checks')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, swaggerConfig, {
+      extraModels: [ErrorResponseDto],
+    });
+    attachCommonErrorResponses(document);
+    SwaggerModule.setup('docs', app, document, {
+      swaggerOptions: { persistAuthorization: true },
+    });
+  }
+
+  // SIGTERM/SIGINT → drain in-flight HTTP + close RPC clients + ORM. k8s
+  // defaults to 30s grace; we finish fast (no long polling) so the default
+  // is plenty.
+  app.enableShutdownHooks();
+  const shutdown = async (signal: string) => {
+    console.log(`Gateway: ${signal} received — closing`);
+    try {
+      await app.close();
+      process.exit(0);
+    } catch (err) {
+      console.error('Gateway shutdown error', err);
+      process.exit(1);
+    }
+  };
+  process.once('SIGTERM', () => void shutdown('SIGTERM'));
+  process.once('SIGINT', () => void shutdown('SIGINT'));
+
+  // Last-resort capture for promise rejections that escaped every Nest
+  // filter and for synchronous throws on the event loop. The Sentry node
+  // SDK installs its own handlers, but having an explicit one means a
+  // local console line accompanies every event — silent crashes have
+  // already cost hours of diagnosis here.
+  installProcessErrorHandlers('gateway', new Logger('gateway'));
+
+  const port = parseInt(optionalEnv('PORT', '3000'), 10);
+  await app.listen(port, '0.0.0.0');
+  console.log(`Gateway running on port ${port}`);
 }
+
+/**
+ * Injects shared error-response schemas (400/401/404/429/500) onto every
+ * operation in the Swagger document. NestJS only auto-documents status codes
+ * the controller returns via @HttpCode or explicit @ApiResponse, so without
+ * this our generated clients have no type for the ubiquitous error envelope.
+ */
+function attachCommonErrorResponses(doc: OpenAPIObject) {
+  const errorRef = { $ref: getSchemaPath(ErrorResponseDto) };
+  const commonErrors: Record<string, { description: string }> = {
+    '400': { description: 'Validation failed or malformed request' },
+    '401': { description: 'Missing or invalid authentication' },
+    '403': { description: 'Authenticated but not authorized' },
+    '404': { description: 'Resource not found' },
+    '409': { description: 'Conflict with existing state' },
+    '429': { description: 'Rate limit exceeded' },
+    '500': { description: 'Unexpected server error' },
+  };
+
+  const methods = ['get', 'post', 'put', 'patch', 'delete'] as const;
+  for (const pathItem of Object.values(doc.paths ?? {})) {
+    for (const method of methods) {
+      const op = (pathItem as Record<string, unknown>)[method] as
+        | { responses?: Record<string, unknown> }
+        | undefined;
+      if (!op) continue;
+      op.responses ??= {};
+      for (const [code, meta] of Object.entries(commonErrors)) {
+        if (op.responses[code]) continue;
+        op.responses[code] = {
+          description: meta.description,
+          content: { 'application/json': { schema: errorRef } },
+        };
+      }
+    }
+  }
+}
+
 void bootstrap();
