@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { MongoDriver } from '@mikro-orm/mongodb';
 import { defineConfig } from '@mikro-orm/core';
+import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 import { MongoTaskConfig, requireEnv, validateEnvWith } from '@app/common';
 import { User } from './entities/user.entity';
 import { Device } from './entities/device.entity';
@@ -25,6 +26,9 @@ export class DatabaseModule {
         MikroOrmModule.forRoot(
           defineConfig({
             driver: MongoDriver,
+            // v7 no longer defaults to ReflectMetadataProvider — declare it
+            // explicitly (pairs with `reflect-metadata` + emitDecoratorMetadata).
+            metadataProvider: ReflectMetadataProvider,
             clientUrl: options.uri,
             dbName: options.dbName,
             entities: ENTITIES,

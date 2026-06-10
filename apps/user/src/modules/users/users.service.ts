@@ -280,7 +280,7 @@ export class UsersService {
         },
       },
       deletedAt: null,
-    } as FilterQuery<User>);
+    });
 
     if (byProvider) {
       return {
@@ -333,7 +333,7 @@ export class UsersService {
     } as unknown as User);
 
     try {
-      await this.em.persistAndFlush(user);
+      await this.em.persist(user).flush();
     } catch (err) {
       // Another OAuth-create raced us on the same email; the other writer won.
       if (isDuplicateKeyError(err, 'email')) this.throwEmailTaken();

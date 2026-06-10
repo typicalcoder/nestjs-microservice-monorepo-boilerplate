@@ -13,10 +13,10 @@ can clone it, rename the namespace, and start adding domain services.
 | Concern         | Choice |
 |-----------------|--------|
 | Framework       | NestJS 11 (monorepo via `nest-cli` projects) |
-| Language / RT   | TypeScript 5.7, Node 22, pnpm |
+| Language / RT   | TypeScript 5.8, Node 22.17+, pnpm |
 | HTTP            | Express 5 + Helmet + `@nestjs/throttler` |
 | Transport (RPC) | RabbitMQ (`@nestjs/microservices`, durable queues, topic-exchange events) |
-| Database        | MongoDB via MikroORM 6 (Repository pattern, soft-delete) |
+| Database        | MongoDB 8 via MikroORM 7 (Repository pattern, soft-delete) |
 | Auth            | JWT access/refresh/device + Passport, argon2 hashing, VK/Yandex OAuth |
 | Cache / tokens  | Redis (`ioredis`) — refresh-token blacklist |
 | Docs            | Swagger / OpenAPI at `/docs` |

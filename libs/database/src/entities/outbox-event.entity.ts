@@ -1,4 +1,4 @@
-import { Entity, Index, Property } from '@mikro-orm/core';
+import { Entity, Index, Property } from '@mikro-orm/decorators/legacy';
 import { BaseEntity } from './base.entity';
 
 export type OutboxEventStatus = 'pending' | 'sent' | 'failed';

@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { CreateRequestContext, MikroORM } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
+import { CreateRequestContext } from '@mikro-orm/decorators/legacy';
 import { UsersService } from './users.service';
 import { MicroserviceException, MSG, OAuthProvider } from '@app/common';
 
@@ -41,7 +42,7 @@ export class UsersController {
 
   @MessagePattern(MSG.CREATE_AUTOREG_USER)
   @CreateRequestContext()
-  createAutoregUser(@Payload() data: UserPayload) {
+  async createAutoregUser(@Payload() data: UserPayload) {
     // The fingerprint is the recovery anchor for autoreg accounts. Falling
     // back to anything else would silently key Device rows on the wrong value.
     if (!data.fingerprint) {
@@ -56,13 +57,13 @@ export class UsersController {
 
   @MessagePattern(MSG.LOGIN_USER)
   @CreateRequestContext()
-  login(@Payload() data: UserPayload) {
+  async login(@Payload() data: UserPayload) {
     return this.usersService.login(data.email!, data.password!);
   }
 
   @MessagePattern(MSG.UPGRADE_USER_ACCOUNT)
   @CreateRequestContext()
-  upgradeAccount(@Payload() data: UserPayload) {
+  async upgradeAccount(@Payload() data: UserPayload) {
     return this.usersService.upgradeAccount(data.userId!, {
       method: data.method ?? 'email',
       email: data.email,
@@ -74,7 +75,7 @@ export class UsersController {
 
   @MessagePattern(MSG.FIND_OR_CREATE_OAUTH_USER)
   @CreateRequestContext()
-  findOrCreateOAuthUser(@Payload() data: UserPayload) {
+  async findOrCreateOAuthUser(@Payload() data: UserPayload) {
     return this.usersService.findOrCreateOAuthUser({
       provider: data.provider as OAuthProvider,
       providerUserId: data.providerUserId!,
@@ -86,13 +87,13 @@ export class UsersController {
 
   @MessagePattern(MSG.FORGOT_PASSWORD)
   @CreateRequestContext()
-  forgotPassword(@Payload() data: UserPayload) {
+  async forgotPassword(@Payload() data: UserPayload) {
     return this.usersService.forgotPassword(data.email!);
   }
 
   @MessagePattern(MSG.RESET_PASSWORD)
   @CreateRequestContext()
-  resetPassword(@Payload() data: UserPayload) {
+  async resetPassword(@Payload() data: UserPayload) {
     return this.usersService.resetPassword(data.token!, data.newPassword!);
   }
 
@@ -116,7 +117,7 @@ export class UsersController {
 
   @MessagePattern(MSG.UPDATE_USER)
   @CreateRequestContext()
-  updateUser(@Payload() data: UserPayload) {
+  async updateUser(@Payload() data: UserPayload) {
     const {
       userId,
       email: _e,

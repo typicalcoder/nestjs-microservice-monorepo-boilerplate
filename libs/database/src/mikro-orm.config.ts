@@ -1,5 +1,6 @@
 import { defineConfig } from '@mikro-orm/mongodb';
 import { MongoDriver } from '@mikro-orm/mongodb';
+import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 import { ENTITIES } from './database.module';
 
 // Used only by the MikroORM CLI (`pnpm exec mikro-orm ...`) for ad-hoc
@@ -12,6 +13,7 @@ const dbName = process.env['MONGO_DB'] ?? 'app-dev';
 
 export default defineConfig({
   driver: MongoDriver,
+  metadataProvider: ReflectMetadataProvider,
   clientUrl: mongoUri,
   dbName,
   entities: ENTITIES,

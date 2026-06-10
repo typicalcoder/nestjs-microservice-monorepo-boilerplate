@@ -1,4 +1,10 @@
-import { Entity, Property, Embeddable, Embedded, Index } from '@mikro-orm/core';
+import {
+  Entity,
+  Property,
+  Embeddable,
+  Embedded,
+  Index,
+} from '@mikro-orm/decorators/legacy';
 import { AccountType, Locale } from '@app/common';
 import type { OAuthProvider } from '@app/common';
 import { BaseEntity } from './base.entity';

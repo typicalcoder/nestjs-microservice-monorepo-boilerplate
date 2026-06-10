@@ -5,7 +5,8 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
-import { CreateRequestContext, MikroORM } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
+import { CreateRequestContext } from '@mikro-orm/decorators/legacy';
 import { OutboxEvent } from '@app/database';
 import { errorAndCapture, metrics, RpcClientService } from '@app/common';
 
